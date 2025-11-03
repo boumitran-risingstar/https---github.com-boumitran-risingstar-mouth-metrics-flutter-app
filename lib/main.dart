@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'package:mouth_metrics/landing_page.dart';
+import 'package:mouth_metrics/router.dart';
 
 void main() {
   runApp(
@@ -85,12 +85,12 @@ class MyApp extends StatelessWidget {
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'Mouth Metrics',
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const LandingPage(),
+          routerConfig: router,
           debugShowCheckedModeBanner: false,
         );
       },

@@ -27,7 +27,7 @@ class LandingPage extends StatelessWidget {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          const AnimatedPlasma(),
+          const AnimatedGradientBackground(),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -151,24 +151,28 @@ class CustomToothIcon extends StatelessWidget {
   }
 }
 
-class AnimatedPlasma extends StatelessWidget {
-  const AnimatedPlasma({super.key});
+class AnimatedGradientBackground extends StatelessWidget {
+  const AnimatedGradientBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return LoopAnimationBuilder(
-      tween: ColorTween(begin: Colors.teal.shade200, end: Colors.purple.shade300),
-      duration: const Duration(seconds: 4),
+    final colors = [
+      Theme.of(context).colorScheme.primary,
+      Colors.teal.shade200,
+      Theme.of(context).colorScheme.secondary,
+    ];
+
+    return LoopAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(seconds: 15),
       builder: (context, value, child) {
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                value!,
-                Colors.blue.shade400,
-              ],
+              transform: GradientRotation(value * 3.14 * 2),
+              colors: colors,
             ),
           ),
         );
