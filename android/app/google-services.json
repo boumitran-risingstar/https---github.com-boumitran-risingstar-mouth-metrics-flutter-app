@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "402886834615",
+    "project_id": "mouth-metrics-flutter-app",
+    "storage_bucket": "mouth-metrics-flutter-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:402886834615:android:1bdd70f435dffef192d032",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_RC18ZojVZXjP1NL_4Nd2y3k0PnZZuSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

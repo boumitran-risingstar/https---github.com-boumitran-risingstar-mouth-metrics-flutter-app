@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:simple_animations/simple_animations.dart';
 
@@ -105,7 +106,7 @@ class LandingPage extends StatelessWidget {
                     );
                   },
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => context.go('/login'),
                     style: ElevatedButton.styleFrom(
                       elevation: 12,
                       shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.8),
