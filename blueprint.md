@@ -1,9 +1,18 @@
-
 # Blueprint: Mouth Metrics Flutter App
 
 ## Overview
 
 Mouth Metrics is a Flutter application designed to be a personal dental health companion. It aims to provide users with tools and insights to better track and understand their oral hygiene habits and health. The application is built with a focus on a modern, clean, and intuitive user interface.
+
+## Backend Services
+
+The application is supported by a set of backend microservices that handle business logic and data persistence.
+
+*   **`user-service`**: This service is responsible for managing user-related data, such as profiles and preferences. It is a private service that requires Firebase authentication for all endpoints, ensuring that users can only access their own data.
+
+*   **`business-service`**: This service handles business-specific logic. It is also a private service that requires Firebase authentication, protecting sensitive business data.
+
+*   **Security**: Both services are deployed as private Cloud Run services. Public access has been removed, and all requests must be authenticated with a valid Firebase ID token.
 
 ## Style, Design, and Features
 
@@ -42,17 +51,3 @@ This document outlines the design and features implemented in the application.
         *   `provider` is used for theme management (`ThemeProvider`).
 *   **Routing:**
     *   `go_router` was added and configured to handle navigation between the landing page and the home screen.
-
-## Current Plan: Implement Phone Authentication
-
-*   **Objective:** To create a secure and user-friendly phone authentication flow, allowing users to sign in and access personalized features.
-
-*   **Steps:**
-    1.  **[COMPLETED]** Add Firebase dependencies: `firebase_core`, `firebase_auth`, and `pinput`.
-    2.  **[COMPLETED]** Initialize a new Firebase project and configure it for the Flutter app.
-    3.  **[COMPLETED]** Run `flutterfire configure` to connect the app to the Firebase project and generate `firebase_options.dart`.
-    4.  **[COMPLETED]** Create the `login_screen.dart` with the necessary UI and logic for phone number input and OTP verification.
-    5.  **[COMPLETED]** Update the `go_router` configuration to include the `/login` route.
-    6.  **[COMPLETED]** Update the `landing_page.dart` to navigate to the `/login` screen.
-    7.  **[COMPLETED]** Update `main.dart` to initialize Firebase.
-    8.  **[USER ACTION REQUIRED]** Enable Phone Number sign-in in the Firebase Console.

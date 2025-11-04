@@ -1,1 +1,69 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"mouth-metrics-flutter-app","appId":"1:402886834615:android:1bdd70f435dffef192d032","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"mouth-metrics-flutter-app","configurations":{"android":"1:402886834615:android:1bdd70f435dffef192d032","ios":"1:402886834615:ios:6624524825aedf4c92d032","web":"1:402886834615:web:64edf3067e09452d92d032"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mouth-metrics-flutter-app",
+          "appId": "1:402886834615:android:1bdd70f435dffef192d032",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mouth-metrics-flutter-app",
+          "configurations": {
+            "android": "1:402886834615:android:1bdd70f435dffef192d032",
+            "ios": "1:402886834615:ios:6624524825aedf4c92d032",
+            "web": "1:402886834615:web:64edf3067e09452d92d032"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/business/**",
+        "run": {
+          "serviceId": "business-service",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/user/**",
+        "run": {
+          "serviceId": "user-service",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8081
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": true
+    }
+  }
+}

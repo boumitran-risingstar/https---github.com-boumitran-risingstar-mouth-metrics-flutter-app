@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,40 @@ import 'package:mouth_metrics/main.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasData) {
+          // User is logged in, navigate to home
+          // Use a post-frame callback to avoid navigating during a build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.go('/home');
+          });
+          // Return a placeholder while redirecting
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // User is not logged in, show the landing page content
+        return const LandingPageContent();
+      },
+    );
+  }
+}
+
+
+class LandingPageContent extends StatelessWidget {
+  const LandingPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
