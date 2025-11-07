@@ -33,8 +33,8 @@ class User {
       name: json['name'] as String?,
       email: json['email'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt'] as String) 
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
           : null,
     );
   }
@@ -46,6 +46,17 @@ class User {
       if (email != null) 'email': email,
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    };
+  }
+
+  // Method to convert a User object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }

@@ -5,12 +5,26 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Use more explicit CORS options to handle proxies
-app.use(cors({
-  origin: true, // Reflects the request origin
-  credentials: true
-}));
-app.options('*', cors()); // Enable pre-flight for all routes
+// Explicitly whitelist allowed origins
+const allowedOrigins = [
+  'https://9000-firebase-mouth-metrics-app-1762189896766.cluster-zkm2jrwbnbd4awuedc2alqxrpk.cloudworkstations.dev',
+  'https://mouthmetrics.32studio.org' // Deployed frontend
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+// Use the CORS middleware with options
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -47,6 +61,16 @@ app.get('/', (req, res) => {
   res.send('User management service is running');
 });
 
+// Helper to format user data for response
+const formatUserResponse = (doc) => {
+    const data = doc.data();
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+        data.createdAt = data.createdAt.toDate().toISOString();
+    }
+    return { id: doc.id, ...data };
+};
+
+
 // GET a user profile by UID
 app.get('/users/:uid', authenticate, async (req, res) => {
   const { uid } = req.params;
@@ -61,7 +85,7 @@ app.get('/users/:uid', authenticate, async (req, res) => {
     if (!userDoc.exists) {
       return res.status(404).send('User not found');
     }
-    res.status(200).send({ id: userDoc.id, ...userDoc.data() });
+    res.status(200).send(formatUserResponse(userDoc));
   } catch (error) {
     console.error('Error getting user:', error);
     res.status(500).send('Error getting user data');
@@ -81,19 +105,29 @@ app.post('/users/sync', authenticate, async (req, res) => {
 
     if (userDoc.exists) {
       console.log('User already exists');
-      // User already exists, return existing data
-      res.status(200).send({ id: userDoc.id, ...userDoc.data() });
+      // User already exists, return existing data formatted correctly
+      res.status(200).send(formatUserResponse(userDoc));
     } else {
       console.log('Creating new user');
       // User does not exist, create a new document
-      const newUser = {
+      const newUserForDb = {
         name: displayName || 'New User', // Use display name from body or default
         email: email || null,
         phoneNumber: phone_number,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
-      await userDocRef.set(newUser);
-      res.status(201).send({ id: uid, ...newUser });
+      await userDocRef.set(newUserForDb);
+
+      // Create a response object with a parsable date
+      const newUserForResponse = {
+          id: uid,
+          name: newUserForDb.name,
+          email: newUserForDb.email,
+          phoneNumber: newUserForDb.phoneNumber,
+          createdAt: new Date().toISOString(), // Send current time as ISO string
+      };
+      
+      res.status(201).send(newUserForResponse);
     }
   } catch (error) {
     console.error('Error syncing user:', error);

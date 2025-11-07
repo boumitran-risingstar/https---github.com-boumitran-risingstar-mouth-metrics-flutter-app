@@ -34,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await _syncUserAndNavigate();
         },
         verificationFailed: (FirebaseAuthException e) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to send OTP: ${e.message}')),
           );
@@ -51,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -76,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await _auth.signInWithCredential(credential);
       await _syncUserAndNavigate();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to verify OTP: $e')),
       );
@@ -91,9 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _syncUserAndNavigate() async {
     try {
       await _userService.syncUser();
-      if (mounted) {
-        context.go('/home');
-      }
+      if (!mounted) return;
+      context.go('/home');
     } catch (e, s) {
       developer.log(
         'Error syncing user',
@@ -101,6 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
         error: e,
         stackTrace: s,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Client exception: $e')),
       );

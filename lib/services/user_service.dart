@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
 
 class UserService {
-  final String _baseUrl = 'https://user-service-ydrkozv2xa-uc.a.run.app'; 
+  final String _baseUrl = 'https://user-service-402886834615.us-central1.run.app'; 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<String?> _getIdToken() async {
