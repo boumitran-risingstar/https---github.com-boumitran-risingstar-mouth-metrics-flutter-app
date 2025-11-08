@@ -83,38 +83,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: _user == null
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
+          : Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    elevation: 8.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.0),
                     ),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Text(
+                              'Edit Your Profile',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Name',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your name';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _phoneNumberController,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number',
+                                border: OutlineInputBorder(),
+                              ),
+                              enabled: false, // Phone number is not editable
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: _updateUserProfile,
+                              child: const Text('Save'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    TextFormField(
-                      controller: _phoneNumberController,
-                      decoration:
-                          const InputDecoration(labelText: 'Phone Number'),
-                      enabled: false, // Phone number is not editable
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _updateUserProfile,
-                      child: const Text('Save'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

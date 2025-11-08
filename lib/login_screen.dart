@@ -120,43 +120,66 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         title: const Text('Phone Authentication'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_isVerifying)
-              const CircularProgressIndicator()
-            else if (!_otpSent) ...[
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  hintText: 'Enter your phone number with country code',
-                  border: OutlineInputBorder(),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              elevation: 8.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_isVerifying)
+                      const CircularProgressIndicator()
+                    else if (!_otpSent) ...[
+                      Text(
+                        'Enter your phone number',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _phoneNumberController,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                          hintText: 'Enter your phone number with country code',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _sendOtp,
+                        child: const Text('Send OTP'),
+                      ),
+                    ] else ...[
+                      Text(
+                        'Enter the OTP',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('Enter the OTP sent to your phone'),
+                      const SizedBox(height: 20),
+                      Pinput(
+                        length: 6,
+                        controller: _otpController,
+                        onCompleted: (pin) => _verifyOtp(),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _verifyOtp,
+                        child: const Text('Verify OTP'),
+                      ),
+                    ],
+                  ],
                 ),
-                keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _sendOtp,
-                child: const Text('Send OTP'),
-              ),
-            ] else ...[
-              const Text('Enter the OTP sent to your phone'),
-              const SizedBox(height: 20),
-              Pinput(
-                length: 6,
-                controller: _otpController,
-                onCompleted: (pin) => _verifyOtp(),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _verifyOtp,
-                child: const Text('Verify OTP'),
-              ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
