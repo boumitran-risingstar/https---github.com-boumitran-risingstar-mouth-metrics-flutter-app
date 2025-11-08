@@ -27,6 +27,11 @@ class HomeScreen extends StatelessWidget {
             tooltip: 'Toggle Theme',
           ),
           IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => context.push('/profile'),
+            tooltip: 'Profile',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _signOut(context),
             tooltip: 'Logout',
