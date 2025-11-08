@@ -144,7 +144,7 @@ class LandingPageContent extends StatelessWidget {
                     onPressed: () => context.go('/login'),
                     style: ElevatedButton.styleFrom(
                       elevation: 12,
-                      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                      shadowColor: Theme.of(context).colorScheme.primary.withAlpha(204),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: const Text('Get Started'),
@@ -172,7 +172,7 @@ class CustomToothIcon extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha(51),
             blurRadius: 20,
             spreadRadius: 5,
           ),

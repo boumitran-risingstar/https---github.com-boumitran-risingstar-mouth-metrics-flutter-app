@@ -116,7 +116,7 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
                 Container(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withAlpha(128),
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Article of the Day',
