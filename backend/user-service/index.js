@@ -96,8 +96,7 @@ app.get('/users/:uid', authenticate, async (req, res) => {
 // POST to create/sync user after authentication
 app.post('/users/sync', authenticate, async (req, res) => {
   console.log('Syncing user...');
-  const { uid, phone_number, email } = req.user; // Data from the ID token
-  const { displayName } = req.body; // Additional data from request body
+  const { uid, phone_number } = req.user; // Data from the ID token
 
   try {
     const userDocRef = usersCollection.doc(uid);
@@ -111,8 +110,6 @@ app.post('/users/sync', authenticate, async (req, res) => {
       console.log('Creating new user');
       // User does not exist, create a new document
       const newUserForDb = {
-        name: displayName || 'New User', // Use display name from body or default
-        email: email || null,
         phoneNumber: phone_number,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -121,8 +118,6 @@ app.post('/users/sync', authenticate, async (req, res) => {
       // Create a response object with a parsable date
       const newUserForResponse = {
           id: uid,
-          name: newUserForDb.name,
-          email: newUserForDb.email,
           phoneNumber: newUserForDb.phoneNumber,
           createdAt: new Date().toISOString(), // Send current time as ISO string
       };
