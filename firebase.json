@@ -47,10 +47,17 @@
         }
       },
       {
+        "source": "/profiles/**",
+        "function": "redirectHandler"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "functions": {
+    "source": "backend/functions"
   },
   "emulators": {
     "auth": {

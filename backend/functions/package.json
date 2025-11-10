@@ -1,0 +1,16 @@
+{
+  "name": "profile-redirect-functions",
+  "description": "Cloud Functions for handling user profile redirects",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "scripts": {
+    "deploy": "firebase deploy --only functions:redirectHandler --project mouth-metrics-flutter-app --force"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "private": true
+}

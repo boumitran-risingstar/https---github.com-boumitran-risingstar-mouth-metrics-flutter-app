@@ -21,7 +21,10 @@ class BusinessService {
 
   // Update a business
   Future<void> updateBusiness(Business business) async {
-    await _firestore.collection(_collectionName).doc(business.id).update(business.toFirestore());
+    await _firestore
+        .collection(_collectionName)
+        .doc(business.id)
+        .update(business.toFirestore());
   }
 
   // Delete a business

@@ -39,7 +39,6 @@ class LandingPage extends StatelessWidget {
   }
 }
 
-
 class LandingPageContent extends StatelessWidget {
   const LandingPageContent({super.key});
 
@@ -52,7 +51,11 @@ class LandingPageContent extends StatelessWidget {
         title: const Text('Mouth Metrics'),
         actions: [
           IconButton(
-            icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(
+              themeProvider.themeMode == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
             onPressed: () => themeProvider.toggleTheme(),
             tooltip: 'Toggle Theme',
           ),
@@ -74,10 +77,7 @@ class LandingPageContent extends StatelessWidget {
                   builder: (context, value, child) {
                     return Transform.scale(
                       scale: value,
-                      child: Opacity(
-                        opacity: value,
-                        child: child,
-                      ),
+                      child: Opacity(opacity: value, child: child),
                     );
                   },
                   child: const CustomToothIcon(),
@@ -99,11 +99,15 @@ class LandingPageContent extends StatelessWidget {
                   child: Text(
                     'Mouth Metrics',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.white,
-                          shadows: [
-                            const Shadow(blurRadius: 10.0, color: Colors.black26, offset: Offset(2, 2)),
-                          ],
+                      color: Colors.white,
+                      shadows: [
+                        const Shadow(
+                          blurRadius: 10.0,
+                          color: Colors.black26,
+                          offset: Offset(2, 2),
                         ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -122,7 +126,9 @@ class LandingPageContent extends StatelessWidget {
                   },
                   child: Text(
                     'Unlock a brighter smile, one day at a time.',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -134,18 +140,19 @@ class LandingPageContent extends StatelessWidget {
                   builder: (context, value, child) {
                     return Transform.scale(
                       scale: value,
-                      child: Opacity(
-                        opacity: value,
-                        child: child,
-                      ),
+                      child: Opacity(opacity: value, child: child),
                     );
                   },
                   child: ElevatedButton(
                     onPressed: () => context.go('/login'),
                     style: ElevatedButton.styleFrom(
                       elevation: 12,
-                      shadowColor: Theme.of(context).colorScheme.primary.withAlpha(204),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shadowColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(204),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Get Started'),
                   ),
@@ -178,11 +185,7 @@ class CustomToothIcon extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(
-        Icons.health_and_safety,
-        size: 70,
-        color: Colors.teal,
-      ),
+      child: const Icon(Icons.health_and_safety, size: 70, color: Colors.teal),
     );
   }
 }

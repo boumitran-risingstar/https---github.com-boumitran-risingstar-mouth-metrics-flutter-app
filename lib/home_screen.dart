@@ -19,17 +19,26 @@ class HomeScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Dashboard'),
         actions: [
           IconButton(
-            icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(
+              themeProvider.themeMode == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
             onPressed: () => themeProvider.toggleTheme(),
             tooltip: 'Toggle Theme',
           ),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline),
             onPressed: () => context.push('/profile'),
-            tooltip: 'Profile',
+            tooltip: 'Profile Settings',
+          ),
+          IconButton(
+            icon: const Icon(Icons.public),
+            onPressed: () => context.push('/my-profile'),
+            tooltip: 'My Public Profile',
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -41,23 +50,66 @@ class HomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          Card(
-            elevation: 4.0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: const ListTile(
-              leading: Icon(Icons.favorite),
-              title: Text('Health Metric 1'),
-              subtitle: Text('Details about this metric'),
-            ),
+          // Welcome Header
+          Text(
+            'Welcome Back!',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 8),
+          Text(
+            'Here is your health summary.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 24),
+
+          // Health Metrics Grid
+          GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildMetricCard(
+                context,
+                icon: Icons.favorite_border,
+                label: 'Heart Rate',
+                value: '78 bpm',
+                color: Colors.red,
+              ),
+              _buildMetricCard(
+                context,
+                icon: Icons.local_fire_department_outlined,
+                label: 'Calories',
+                value: '1200 kcal',
+                color: Colors.orange,
+              ),
+              _buildMetricCard(
+                context,
+                icon: Icons.directions_walk,
+                label: 'Steps',
+                value: '8,500',
+                color: Colors.blue,
+              ),
+              _buildMetricCard(
+                context,
+                icon: Icons.nightlight_round,
+                label: 'Sleep',
+                value: '7h 30m',
+                color: Colors.purple,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Daily Tip Card
           Card(
-            elevation: 4.0,
-            color: Theme.of(context).colorScheme.secondaryContainer,
+            elevation: 2.0,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
+              borderRadius: BorderRadius.circular(12.0),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -66,67 +118,92 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Daily Tip',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8.0),
                   Text(
-                    'Brush your teeth twice a day for a healthy smile!',
-                     style: Theme.of(context).textTheme.bodyMedium,
+                    'Don\'t forget to floss! It\'s as important as brushing for preventing cavities and gum disease.',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
           ),
-           const SizedBox(height: 16.0),
+          const SizedBox(height: 24),
+
+          // Article of the Day Card
           Card(
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
+              borderRadius: BorderRadius.circular(12.0),
             ),
+            elevation: 2.0,
             child: Stack(
               alignment: Alignment.bottomLeft,
               children: [
                 Image.network(
-                  'https://picsum.photos/400/200',
-                  fit: BoxFit.cover,
+                  'https://images.pexels.com/photos/1919236/pexels-photo-191923f.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                   height: 200,
                   width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox(
-                      height: 200,
-                      child: Center(
-                        child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) {
-                      return child;
-                    }
-                    return SizedBox(
-                      height: 200,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
+                  fit: BoxFit.cover,
                 ),
                 Container(
-                  color: Colors.black.withAlpha(128),
+                  height: 200,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.black, Colors.transparent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                    ),
+                  ),
+                ),
+                Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    'Article of the Day',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                    'The Surprising Benefits of Oil Pulling',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(BuildContext context, {required IconData icon, required String label, required String value, required Color color}) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 32, color: color),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,22 +1,20 @@
-
 steps:
+# Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/cloud-run-source-deploy/user-service:latest', '.' ]
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/user-service:latest', '.']
+
+# Push the container image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'push', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/cloud-run-source-deploy/user-service:latest' ]
+  args: ['push', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/user-service:latest']
+
+# Deploy the container image to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
   args:
   - 'run'
   - 'deploy'
   - 'user-service'
-  - '--image'
-  - 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/cloud-run-source-deploy/user-service:latest'
-  - '--region'
-  - 'us-central1'
-  - '--platform'
-  - 'managed'
+  - '--image=us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/user-service:latest'
+  - '--region=us-central1'
+  - '--platform=managed'
   - '--allow-unauthenticated'
-  - '--project'
-  - 'mouth-metrics-flutter-app'
-images:
-- 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/cloud-run-source-deploy/user-service:latest'
+  - '--project=mouth-metrics-flutter-app'

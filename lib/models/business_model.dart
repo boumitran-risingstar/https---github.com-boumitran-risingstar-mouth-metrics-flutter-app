@@ -1,4 +1,3 @@
-
 class Business {
   final String id;
   final String name;
@@ -16,10 +15,6 @@ class Business {
   }
 
   Map<String, dynamic> toFirestore() {
-    return {
-      'name': name,
-      'ownerId': ownerId,
-    };
+    return {'name': name, 'ownerId': ownerId};
   }
 }
-

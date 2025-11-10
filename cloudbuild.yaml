@@ -1,0 +1,15 @@
+steps:
+# Install Flutter
+- name: 'gcr.io/cloud-builders/git'
+  args: ['clone', 'https://github.com/flutter/flutter.git', '--depth', '1', '--branch', 'stable', '/flutter']
+- name: 'bash'
+  args: ['/flutter/bin/flutter', 'doctor']
+
+# Build the web app
+- name: 'bash'
+  entrypoint: '/flutter/bin/flutter'
+  args: ['build', 'web']
+
+# Deploy to Firebase Hosting
+- name: 'gcr.io/cloud-builders/firebase'
+  args: ['deploy', '--only', 'hosting', '--project', 'mouth-metrics-flutter-app', '--force']

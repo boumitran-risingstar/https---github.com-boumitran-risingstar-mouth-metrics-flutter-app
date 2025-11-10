@@ -18,6 +18,65 @@ The application is supported by a set of backend microservices that handle busin
 
 This document outlines the design and features implemented in the application.
 
+### Version 1.6.0 (Current)
+
+*   **Improved Slug Generation:**
+    *   The `syncUser` function in `user_service.dart` has been updated to ensure that all users, including those who sign up with only a phone number, are assigned a unique slug.
+    *   If a user's `displayName` is not available, the `phoneNumber` is now used as the basis for generating the slug. If neither is available, it defaults to 'user'. This ensures that the public profile feature is available to all users, regardless of their sign-up method.
+
+### Version 1.5.0
+
+*   **Comprehensive User Profile Feature:**
+    *   **Public Profile Screen:** A new `my_profile_screen.dart` was created to display a user's public-facing profile. This screen shows the user's name, bio, and profile picture.
+    *   **Profile Sharing:** The public profile screen includes a "Share" button that uses the `share_plus` package to open the native device sharing UI, allowing users to share a link to their public profile.
+    *   **Editable Profile Screen:** The `profile_screen.dart` was completely redesigned to provide a modern and intuitive interface for users to edit their profile information. Features include:
+        *   An improved layout with a `CircleAvatar` for the profile picture.
+        *   A new multi-line text field for the user's bio.
+        *   The ability to upload a new profile picture using the `image_picker` package.
+    *   **Backend Integration:**
+        *   The `user_service.dart` was updated to include an `uploadProfilePicture` method that uploads images to Firebase Storage.
+        *   The `updateUser` method in the service was enhanced to handle the new `bio` and `profilePictureUrl` fields.
+
+### Version 1.4.0
+
+*   **Shareable Public Profiles (Frontend):**
+    *   **Backend Deployed:** The `user-service` is successfully deployed on Cloud Run, providing endpoints for user creation and public profile retrieval. All IAM and permissions issues have been resolved.
+    *   **Profile Navigation:** A "My Profile" button was added to the `HomeScreen` to navigate users to their dedicated profile page.
+    *   **Profile Screen:** A new `profile_screen.dart` was created to display the user's public profile information (name, bio, profile picture) fetched from the backend.
+    *   **Profile Sharing:** The profile screen features a "Share" button. Tapping this button will open the native device sharing UI, allowing users to share a public link to their profile page.
+    *   **Dependencies:** The `share_plus` package was added to the project to facilitate the sharing functionality.
+    *   **Routing:** A new `/my-profile` route was added to the `go_router` configuration.
+
+### Version 1.3.0
+
+*   **Public User Profiles & Slug Management:**
+    *   **Static Page Generation:** The `user-service` now generates a static HTML profile page for each user when they update their name. These pages are stored in Cloud Storage and made public.
+    *   **Unique Slug Generation:** When a user sets or updates their name, a unique, URL-friendly "slug" (e.g., `john-doe-x4f7`) is generated.
+    *   **Atomic Operations:** The entire process of creating a slug, linking it to a user, and updating the user's profile is handled within a Firestore transaction. This ensures data integrity and prevents race conditions, guaranteeing slug uniqueness.
+    *   **Slug History & Permanent Redirects:**
+        *   When a user changes their name, the old slug is saved in a `slugHistory` array.
+        *   A new Cloud Function, `redirectHandler`, was created. If a request is made to an old profile URL, this function looks up the old slug in the `slugHistory` and issues a permanent (301) redirect to the user's current profile URL. This is crucial for SEO and maintaining link integrity.
+    *   **Firebase Hosting Integration:** Firebase Hosting is configured to use the `redirectHandler` function for any request to the `/profiles/` path, seamlessly managing the redirection from old to new profile URLs.
+
+### Version 1.2.0
+
+*   **User Profile Management:**
+    *   **Profile Screen:** A new `profile_screen.dart` was created, allowing users to view and edit their profile information.
+        *   Users can update their `name` and `email`.
+        *   The `phone number` is displayed but is not editable.
+    *   **Backend Integration:** A `user_service.dart` was implemented to communicate with the backend `user-service`.
+        *   The service handles `GET` and `PUT` requests to fetch and update user data.
+        *   All requests are authenticated using a Firebase ID token.
+    *   **User Sync:** A `syncUser` function was added to the `user_service` to synchronize user data between Firebase Authentication and the application's backend after login.
+
+*   **Enhanced Home Screen & Navigation:**
+    *   **Profile Access:** A "Profile" icon button was added to the `HomeScreen` app bar, navigating users to the new `/profile` screen.
+    *   **Logout Functionality:** A "Logout" button was added to the `HomeScreen` to sign the user out and return them to the landing page.
+    *   **UI Improvements:** The `HomeScreen` UI was updated with `Card` elements for a more organized and visually appealing layout, displaying health metrics, daily tips, and articles.
+
+*   **Routing:**
+    *   The `go_router` configuration was updated to include the `/profile` route, which directs to the `ProfileScreen`.
+
 ### Version 1.1.0
 
 *   **Phone Authentication:**

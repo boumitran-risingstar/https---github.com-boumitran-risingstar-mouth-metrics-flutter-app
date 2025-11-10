@@ -46,16 +46,16 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-           setState(() {
+          setState(() {
             _verificationId = verificationId;
           });
         },
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -79,9 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
       await _syncUserAndNavigate();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to verify OTP: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to verify OTP: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -104,9 +104,9 @@ class _LoginScreenState extends State<LoginScreen> {
         stackTrace: s,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Client exception: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Client exception: $e')));
     }
   }
 
