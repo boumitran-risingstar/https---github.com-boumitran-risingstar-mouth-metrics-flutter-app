@@ -195,8 +195,8 @@ app.put('/users/:userId', authenticate, async (req, res) => {
         if (req.user.uid !== userId) {
             return res.status(403).send('Forbidden: You can only update your own profile.');
         }
-        
-        const { name, bio } = req.body; // Only allow name and bio to be updated for now
+
+        const { name, bio, email } = req.body;
         const userRef = usersCollection.doc(userId);
         const userDoc = await userRef.get();
 
@@ -208,34 +208,46 @@ app.put('/users/:userId', authenticate, async (req, res) => {
         const updatedData = { ...currentData };
         let newSlug = null;
         let oldSlug = currentData.slug;
-        
-        // If the name is changing, we need to generate a new slug
+
+        // If email is provided, update it in the local object
+        if (email) {
+            updatedData.email = email;
+        }
+
+        // If the name is changing, generate a new slug
         if (name && name !== currentData.name) {
             updatedData.name = name;
             newSlug = await generateUniqueSlug(name);
             updatedData.slug = newSlug;
-            // Add the old slug to history
             updatedData.slugHistory = [...(currentData.slugHistory || []), oldSlug];
         }
+
         if (bio) {
             updatedData.bio = bio;
         }
 
+        // Use a transaction to update Firestore and the slugs collection atomically
         await firestore.runTransaction(async (transaction) => {
-            transaction.update(userRef, {
+            // Create the payload for the update
+            const updatePayload = {
                 name: updatedData.name,
                 bio: updatedData.bio,
+                email: updatedData.email, // This will be the new or existing email
                 slug: updatedData.slug,
                 slugHistory: updatedData.slugHistory,
-            });
+            };
+
+            // Remove undefined fields before updating
+            Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key]);
+
+            transaction.update(userRef, updatePayload);
+
             if (newSlug) {
-                // Point the new slug to this user
                 transaction.set(slugsCollection.doc(newSlug), { userId });
-                // We no longer delete the old slug, it's needed for redirects
             }
         });
-        
-        // Regenerate and upload the static HTML page with new data
+
+        // Regenerate and upload the static HTML page with the new data
         await generateAndUploadProfilePage(updatedData);
 
         res.status(200).send({ message: 'Profile updated successfully', newSlug: newSlug });
