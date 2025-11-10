@@ -84,9 +84,7 @@ const generateAndUploadProfilePage = async (userData) => {
     await file.save(htmlContent, {
         metadata: { contentType: 'text/html' },
     });
-    // Make the file public
-    await file.makePublic();
-    console.log(`Profile page for ${slug} uploaded to GCS and made public.`);
+    console.log(`Profile page for ${slug} uploaded to GCS.`);
 };
 
 // Sync user: Creates a user if they don't exist, or returns the existing user.
