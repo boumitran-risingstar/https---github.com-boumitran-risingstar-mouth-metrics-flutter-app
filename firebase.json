@@ -51,7 +51,7 @@
       },
       {
         "source": "/profiles/**",
-        "function": "redirectHandler"
+        "function": "profileHandler"
       },
       {
         "source": "**",

@@ -87,6 +87,46 @@ const generateAndUploadProfilePage = async (userData) => {
     console.log(`Profile page for ${slug} uploaded to GCS.`);
 };
 
+// Helper function to create and upload a static HTML redirect page
+const createAndUploadRedirectPage = async (oldSlug, newSlug) => {
+    if (!oldSlug || !newSlug) {
+        console.log('Skipping redirect page creation: old or new slug is missing.');
+        return;
+    }
+
+    // The final public URL path for profiles
+    const newProfileUrl = `/profiles/${newSlug}`; 
+
+    const redirectHtmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Permanent Redirect</title>
+            <link rel="canonical" href="${newProfileUrl}" />
+            <meta http-equiv="refresh" content="0; url=${newProfileUrl}" />
+            <style>
+                body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+            </style>
+        </head>
+        <body>
+            <h1>This page has permanently moved.</h1>
+            <p>You will be redirected to the new location automatically.</p>
+            <p>If you are not redirected, <a href="${newProfileUrl}">click here</a>.</p>
+        </body>
+        </html>
+    `;
+    const file = profilesBucket.file(`${oldSlug}.html`);
+    await file.save(redirectHtmlContent, {
+        metadata: { 
+            contentType: 'text/html',
+            cacheControl: 'public, max-age=3600', // Cache redirect for 1 hour
+        },
+    });
+    console.log(`Redirect page created from ${oldSlug}.html to ${newProfileUrl}.`);
+};
+
+
 // Sync user: Creates a user if they don't exist, or returns the existing user.
 app.post('/users/sync', authenticate, async (req, res) => {
     try {
@@ -161,6 +201,9 @@ app.get('/profile/:slug', async (req, res) => {
         const slugDoc = await slugsCollection.doc(slug).get();
 
         if (!slugDoc.exists) {
+            // It might be an old slug, so we need to check slugHistory.
+            // This requires a more complex query. For this service, we assume public access is via the static pages.
+            // A separate Cloud Function (`redirectHandler`) will handle old slug redirects.
             return res.status(404).send('Profile not found.');
         }
 
@@ -217,7 +260,8 @@ app.put('/users/:userId', authenticate, async (req, res) => {
             updatedData.name = name;
             newSlug = await generateUniqueSlug(name);
             updatedData.slug = newSlug;
-            updatedData.slugHistory = [...(currentData.slugHistory || []), oldSlug];
+            // Prepend old slug to history to keep it ordered chronologically
+            updatedData.slugHistory = [oldSlug, ...(currentData.slugHistory || [])];
         }
 
         if (bio) {
@@ -226,27 +270,33 @@ app.put('/users/:userId', authenticate, async (req, res) => {
 
         // Use a transaction to update Firestore and the slugs collection atomically
         await firestore.runTransaction(async (transaction) => {
-            // Create the payload for the update
             const updatePayload = {
                 name: updatedData.name,
                 bio: updatedData.bio,
-                email: updatedData.email, // This will be the new or existing email
+                email: updatedData.email,
                 slug: updatedData.slug,
                 slugHistory: updatedData.slugHistory,
             };
 
-            // Remove undefined fields before updating
             Object.keys(updatePayload).forEach(key => updatePayload[key] === undefined && delete updatePayload[key]);
 
             transaction.update(userRef, updatePayload);
 
             if (newSlug) {
+                // Register the new slug
                 transaction.set(slugsCollection.doc(newSlug), { userId });
+                // We no longer delete the old slug from the slugs collection.
+                // It now points to a redirect page, and we might need it for historical lookups.
             }
         });
 
         // Regenerate and upload the static HTML page with the new data
         await generateAndUploadProfilePage(updatedData);
+
+        // If a new slug was created, create a redirect page for the old one
+        if (newSlug && oldSlug) {
+            await createAndUploadRedirectPage(oldSlug, newSlug);
+        }
 
         res.status(200).send({ message: 'Profile updated successfully', newSlug: newSlug });
     } catch (error) {

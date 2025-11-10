@@ -3,14 +3,14 @@
   "description": "Cloud Functions for handling user profile redirects",
   "main": "index.js",
   "dependencies": {
-    "firebase-admin": "^12.0.0",
-    "firebase-functions": "^5.0.0"
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^6.6.0"
   },
   "scripts": {
     "deploy": "firebase deploy --only functions:redirectHandler --project mouth-metrics-flutter-app --force"
   },
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "private": true
 }
