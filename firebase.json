@@ -43,7 +43,7 @@
         }
       },
       {
-        "source": "/api/user/**",
+        "source": "/api/users/**",
         "run": {
           "serviceId": "user-service",
           "region": "us-central1"

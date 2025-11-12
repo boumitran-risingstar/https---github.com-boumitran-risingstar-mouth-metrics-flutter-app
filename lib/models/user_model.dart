@@ -1,5 +1,57 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Represents a single photo in the user's gallery
+class Photo {
+  final String id;
+  final String url;
+  final bool isDefault;
+  final DateTime createdAt;
+
+  Photo({
+    required this.id,
+    required this.url,
+    required this.isDefault,
+    required this.createdAt,
+  });
+
+  // Factory constructor to create a Photo from JSON
+  factory Photo.fromJson(Map<String, dynamic> json) {
+    if (json['id'] == null || json['url'] == null || json['isDefault'] == null || json['createdAt'] == null) {
+      throw const FormatException('Photo JSON is missing required fields.');
+    }
+
+    final dynamic createdAtRaw = json['createdAt'];
+    DateTime createdAt;
+    if (createdAtRaw is String) {
+      createdAt = DateTime.parse(createdAtRaw);
+    } else if (createdAtRaw is Timestamp) {
+      createdAt = createdAtRaw.toDate();
+    } else if (createdAtRaw is Map<String, dynamic> && createdAtRaw.containsKey('_seconds')) {
+      createdAt = Timestamp(createdAtRaw['_seconds'], createdAtRaw['_nanoseconds'] ?? 0).toDate();
+    } 
+    else {
+      throw FormatException('Invalid format for createdAt in Photo JSON: $createdAtRaw');
+    }
+
+    return Photo(
+      id: json['id'] as String,
+      url: json['url'] as String,
+      isDefault: json['isDefault'] as bool,
+      createdAt: createdAt,
+    );
+  }
+
+  // Method to convert a Photo object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'url': url,
+      'isDefault': isDefault,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+}
+
 class User {
   final String id;
   final String? name;
@@ -9,6 +61,7 @@ class User {
   final String? bio;
   final String? profilePictureUrl;
   final DateTime? createdAt;
+  final List<Photo> photoGallery; // New field for the photo gallery
 
   User({
     required this.id,
@@ -19,6 +72,7 @@ class User {
     this.bio,
     this.profilePictureUrl,
     this.createdAt,
+    this.photoGallery = const [], // Default to an empty list
   });
 
   // Factory constructor to create a User from a Firestore document
@@ -32,6 +86,10 @@ class User {
       bio: data['bio'] as String?,
       profilePictureUrl: data['profilePictureUrl'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      photoGallery: (data['photoGallery'] as List<dynamic>?)
+              ?.map((photoJson) => Photo.fromJson(photoJson as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 
@@ -47,7 +105,15 @@ class User {
       createdAt = DateTime.tryParse(createdAtRaw);
     } else if (createdAtRaw is Timestamp) {
       createdAt = createdAtRaw.toDate();
+    } else if (createdAtRaw is Map<String, dynamic> && createdAtRaw.containsKey('_seconds')) {
+        createdAt = Timestamp(createdAtRaw['_seconds'], createdAtRaw['_nanoseconds'] ?? 0).toDate();
     }
+
+    // Parse the photo gallery
+    final List<Photo> gallery = (json['photoGallery'] as List<dynamic>?)
+            ?.map((photoJson) => Photo.fromJson(photoJson as Map<String, dynamic>))
+            .toList() ??
+        const [];
 
     return User(
       id: json['id'] as String,
@@ -58,6 +124,7 @@ class User {
       bio: json['bio'] as String?,
       profilePictureUrl: json['profilePictureUrl'] as String?,
       createdAt: createdAt,
+      photoGallery: gallery,
     );
   }
 
@@ -71,6 +138,7 @@ class User {
       if (bio != null) 'bio': bio,
       if (profilePictureUrl != null) 'profilePictureUrl': profilePictureUrl,
       if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+      'photoGallery': photoGallery.map((p) => p.toJson()).toList(),
     };
   }
 
@@ -85,6 +153,7 @@ class User {
       'bio': bio,
       'profilePictureUrl': profilePictureUrl,
       'createdAt': createdAt?.toIso8601String(),
+      'photoGallery': photoGallery.map((p) => p.toJson()).toList(),
     };
   }
 }

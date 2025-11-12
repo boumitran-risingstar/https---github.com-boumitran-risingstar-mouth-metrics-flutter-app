@@ -1,18 +1,20 @@
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:developer' as developer;
-import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
 
 class UserService {
-  final String _baseUrl =
-      'https://user-service-402886834615.us-central1.run.app';
+  // Base URL for the Cloud Run service
+  final String _serviceBaseUrl = 'https://user-service-402886834615.us-central1.run.app';
+  // Path for the authenticated API endpoints
+  final String _apiPath = '/api';
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final firebase_storage.FirebaseStorage _storage =
-      firebase_storage.FirebaseStorage.instance;
 
   Future<String?> _getIdToken() async {
     final User? user = _auth.currentUser;
@@ -23,50 +25,20 @@ class UserService {
     return await user.getIdToken();
   }
 
-    Future<String> uploadProfilePicture(String userId, File image) async {
-    try {
-      final ref = _storage.ref('profile_pictures/$userId/profile.jpg');
-      await ref.putFile(image);
-      final url = await ref.getDownloadURL();
-      return url;
-    } on firebase_storage.FirebaseException catch (e, s) {
-      developer.log(
-        'Error uploading profile picture',
-        name: 'user_service.uploadProfilePicture',
-        error: e,
-        stackTrace: s,
-      );
-      throw Exception('Failed to upload profile picture: $e');
-    }
-  }
-
   Future<app_user.User?> syncUser() async {
     final idToken = await _getIdToken();
-    if (idToken == null) {
-      throw Exception('Not authenticated');
-    }
+    if (idToken == null) throw Exception('Not authenticated');
 
     final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('Not authenticated');
-    }
+    if (user == null) throw Exception('Not authenticated');
 
     final displayName = user.displayName;
     final phoneNumber = user.phoneNumber;
+    String nameToSync = (displayName != null && displayName.isNotEmpty)
+        ? displayName
+        : (phoneNumber != null && phoneNumber.isNotEmpty ? phoneNumber : 'user');
 
-    String nameToSync;
-    if (displayName != null && displayName.isNotEmpty) {
-      nameToSync = displayName;
-    } else if (phoneNumber != null && phoneNumber.isNotEmpty) {
-      nameToSync = phoneNumber;
-    } else {
-      nameToSync = 'user';
-    }
-
-    developer.log('Attempting to sync user', name: 'user_service');
-    final syncUrl = Uri.parse('$_baseUrl/users/sync');
-    developer.log('Calling API: $syncUrl with name: $nameToSync', name: 'user_service');
-
+    final syncUrl = Uri.parse('$_serviceBaseUrl$_apiPath/users/sync');
     try {
       final response = await http.post(
         syncUrl,
@@ -79,36 +51,22 @@ class UserService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        developer.log('User synced successfully', name: 'user_service');
         return app_user.User.fromJson(jsonDecode(response.body));
       } else {
-        developer.log(
-          'Failed to sync user',
-          name: 'user_service',
-          error: 'Status code: ${response.statusCode}\nBody: ${response.body}',
-          level: 1000,
-        );
         throw Exception('Failed to sync user: ${response.body}');
       }
-    } catch (e, s) {
-      developer.log(
-        'Error syncing user',
-        name: 'user_service.syncUser',
-        error: e,
-        stackTrace: s,
-      );
+    } catch (e) {
+      developer.log('Error syncing user', name: 'user_service.syncUser', error: e);
       throw Exception('Failed to sync user: $e');
     }
   }
 
   Future<app_user.User?> getUser(String uid) async {
     final idToken = await _getIdToken();
-    if (idToken == null) {
-      throw Exception('Not authenticated');
-    }
+    if (idToken == null) throw Exception('Not authenticated');
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/users/$uid'),
+      Uri.parse('$_serviceBaseUrl$_apiPath/users/$uid'),
       headers: {
         'Authorization': 'Bearer $idToken',
         'Cache-Control': 'no-cache',
@@ -124,14 +82,12 @@ class UserService {
     }
   }
 
-  Future<void> updateUser(String uid, {String? name, String? bio, String? email, String? profilePictureUrl}) async {
+  Future<void> updateUser(String uid, {String? name, String? bio, String? email}) async {
     final idToken = await _getIdToken();
-    if (idToken == null) {
-      throw Exception('Not authenticated');
-    }
+    if (idToken == null) throw Exception('Not authenticated');
 
     final response = await http.put(
-      Uri.parse('$_baseUrl/users/$uid'),
+      Uri.parse('$_serviceBaseUrl$_apiPath/users/$uid'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $idToken',
@@ -141,7 +97,6 @@ class UserService {
         if (name != null) 'name': name,
         if (bio != null) 'bio': bio,
         if (email != null) 'email': email,
-        if (profilePictureUrl != null) 'profilePictureUrl': profilePictureUrl,
       }),
     );
 
@@ -150,20 +105,119 @@ class UserService {
     }
   }
 
+  // Uploads a photo and returns the updated photo gallery.
+  Future<List<app_user.Photo>> uploadPhoto(String userId, File image) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) throw Exception('Not authenticated');
+
+    final url = Uri.parse('$_serviceBaseUrl$_apiPath/users/$userId/photos');
+    final request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer $idToken';
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'photo',
+        image.path,
+        contentType: MediaType('image', image.path.split('.').last),
+      ),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      final List<dynamic> galleryJson = responseBody['gallery'];
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to upload photo: ${response.body}');
+    }
+  }
+
+  // Web-compatible method to upload a photo from a byte array (Uint8List)
+  Future<List<app_user.Photo>> uploadPhotoFromBytes(String userId, Uint8List imageBytes, String filename) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) throw Exception('Not authenticated');
+
+    final url = Uri.parse('$_serviceBaseUrl$_apiPath/users/$userId/photos');
+    final request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer $idToken';
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'photo',
+        imageBytes,
+        filename: filename, // Use the provided filename
+        contentType: MediaType('image', filename.split('.').last),      ),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        final List<dynamic> galleryJson = responseBody['gallery'];
+        return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+    } else {
+        throw Exception('Failed to upload photo from bytes: ${response.body}');
+    }
+  }
+
+
+  // Sets a photo as default and returns the updated photo gallery.
+  Future<List<app_user.Photo>> setDefaultPhoto(String userId, String photoId) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) throw Exception('Not authenticated');
+
+    final url = Uri.parse('$_serviceBaseUrl$_apiPath/users/$userId/photos/$photoId/default');
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Cache-Control': 'no-cache',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      final List<dynamic> galleryJson = responseBody['gallery'];
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to set default photo: ${response.body}');
+    }
+  }
+
+  // Deletes a photo and returns the updated photo gallery.
+  Future<List<app_user.Photo>> deletePhoto(String userId, String photoId) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) throw Exception('Not authenticated');
+
+    final url = Uri.parse('$_serviceBaseUrl$_apiPath/users/$userId/photos/$photoId');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Cache-Control': 'no-cache',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      final List<dynamic> galleryJson = responseBody['gallery'];
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to delete photo: ${response.body}');
+    }
+  }
+
   Future<Map<String, dynamic>> getUserProfile() async {
     final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not logged in');
-    }
+    if (user == null) throw Exception('User not logged in');
 
     try {
-      // First, get the internal user data to find the slug
       final appUser = await getUser(user.uid);
       final slug = appUser?.slug;
 
       if (slug == null || slug.isEmpty) {
-        // This can happen if the user was created before slugs existed.
-        // Sync the user to generate a slug, then fetch the profile.
         final syncedUser = await syncUser();
         final newSlug = syncedUser?.slug;
         if (newSlug == null || newSlug.isEmpty) {
@@ -171,45 +225,26 @@ class UserService {
         }
         return await _fetchPublicProfile(newSlug);
       } else {
-        // Use the existing slug
         return await _fetchPublicProfile(slug);
       }
-    } catch (e, s) {
-      developer.log(
-        'Error getting user profile',
-        name: 'user_service.getUserProfile',
-        error: e,
-        stackTrace: s,
-      );
+    } catch (e) {
+      developer.log('Error getting user profile', name: 'user_service.getUserProfile', error: e);
       throw Exception('Failed to get user profile: $e');
     }
   }
 
-  // Helper method to fetch the public profile by slug
+  // This helper uses the public-facing endpoint, which does NOT have the /api prefix.
   Future<Map<String, dynamic>> _fetchPublicProfile(String slug) async {
-    final profileUrl = Uri.parse('$_baseUrl/profile/$slug');
-    developer.log(
-      'Fetching public profile from: $profileUrl',
-      name: 'user_service',
-    );
-
+    final profileUrl = Uri.parse('$_serviceBaseUrl/profile/$slug');
     final response = await http.get(
       profileUrl,
-      headers: {'Cache-Control': 'no-cache'},
+      headers: {'cache-control': 'no-cache'},
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      developer.log(
-        'Failed to fetch public profile',
-        name: 'user_service._fetchPublicProfile',
-        error: 'Status code: ${response.statusCode}\nBody: ${response.body}',
-        level: 1000,
-      );
-      throw Exception(
-        'Failed to load profile for slug $slug: ${response.body}',
-      );
+      throw Exception('Failed to load profile for slug $slug: ${response.body}');
     }
   }
 }

@@ -36,11 +36,6 @@ class HomeScreen extends StatelessWidget {
             tooltip: 'Profile Settings',
           ),
           IconButton(
-            icon: const Icon(Icons.public),
-            onPressed: () => context.push('/my-profile'),
-            tooltip: 'My Public Profile',
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _signOut(context),
             tooltip: 'Logout',
@@ -144,7 +139,7 @@ class HomeScreen extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               children: [
                 Image.network(
-                  'https://images.pexels.com/photos/1919236/pexels-photo-191923f.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                  'https://images.pexels.com/photos/1919236/pexels-photo-1919236.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,

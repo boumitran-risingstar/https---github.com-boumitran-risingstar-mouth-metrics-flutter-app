@@ -1,12 +1,33 @@
 rules_version = '2';
 
 service firebase.storage {
-  // This rule applies only to the 'user-profile-pages' bucket
+  // This rule applies to the 'user-profile-pages' bucket.
   match /b/user-profile-pages/o {
-    // This matches any file at any path within that bucket
-    match /{allPaths=**} {
+
+    // --- Rules for User-Uploaded Photos ---
+    // All user photos will be stored in a dedicated 'user-photos' folder.
+    match /user-photos/{userId}/{photoId} {
+      // Allow public read access so anyone can see profile pictures.
       allow read;
-      allow write: if false; // Explicitly deny writes for security
+
+      // Allow write (create, update, delete) only if:
+      // 1. The user is authenticated.
+      // 2. The user's ID matches the {userId} in the file path.
+      // 3. The uploaded file is a reasonable size (max 2MB).
+      // 4. The uploaded file is a standard image type (PNG or JPEG).
+      allow write: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.size < 2 * 1024 * 1024
+                    && request.resource.contentType.matches('image/(png|jpeg)');
+    }
+
+    // --- Rules for Statically Generated HTML Profile Pages ---
+    // These files are at the root of the bucket.
+    match /{slug}.html {
+      // Allow public read access.
+      allow read;
+      // Deny any client-side writes. Only the backend can write these.
+      allow write: if false;
     }
   }
 }
