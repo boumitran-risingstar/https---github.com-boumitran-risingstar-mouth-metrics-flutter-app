@@ -381,7 +381,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: const Text('Set as Default'),
                   onTap: () {
                     Navigator.of(builderContext).pop();
-                    _setDefaultPhoto(photo.id);
+                    if (photo.id != null) {
+                      _setDefaultPhoto(photo.id!);
+                    }
                   },
                 ),
               ListTile(
@@ -389,7 +391,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text('Delete Photo', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 onTap: () {
                   Navigator.of(builderContext).pop();
-                  _deletePhoto(photo.id);
+                  if (photo.id != null) {
+                    _deletePhoto(photo.id!);
+                  }
                 },
               ),
             ],

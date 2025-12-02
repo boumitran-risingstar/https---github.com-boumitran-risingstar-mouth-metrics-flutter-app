@@ -153,7 +153,7 @@ class UserService {
     if (response.statusCode == 201) {
       final responseBody = jsonDecode(response.body);
       final List<dynamic> galleryJson = responseBody['gallery'];
-      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).whereType<app_user.Photo>().toList();
     } else {
       throw Exception('Failed to upload photo: ${response.body}');
     }
@@ -186,7 +186,7 @@ class UserService {
     if (response.statusCode == 201) {
         final responseBody = jsonDecode(response.body);
         final List<dynamic> galleryJson = responseBody['gallery'];
-        return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+        return galleryJson.map((json) => app_user.Photo.fromJson(json)).whereType<app_user.Photo>().toList();
     } else {
         throw Exception('Failed to upload photo from bytes: ${response.body}');
     }
@@ -210,7 +210,7 @@ class UserService {
     if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
       final List<dynamic> galleryJson = responseBody['gallery'];
-      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).whereType<app_user.Photo>().toList();
     } else {
       throw Exception('Failed to set default photo: ${response.body}');
     }
@@ -233,7 +233,7 @@ class UserService {
     if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
       final List<dynamic> galleryJson = responseBody['gallery'];
-      return galleryJson.map((json) => app_user.Photo.fromJson(json)).toList();
+      return galleryJson.map((json) => app_user.Photo.fromJson(json)).whereType<app_user.Photo>().toList();
     } else {
       throw Exception('Failed to delete photo: ${response.body}');
     }
