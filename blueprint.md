@@ -35,7 +35,11 @@ The application is supported by a set of backend microservices that handle busin
 
 This document outlines the design and features implemented in the application.
 
-### Version 1.8.0 (Current)
+### Version 1.8.1 (Current)
+
+*   **Improved OTP Input:** In the phone authentication OTP page (`login_screen.dart`), the `Pinput` widget now has `autofocus: true`. This automatically focuses the cursor on the OTP input field, improving the user experience during login.
+
+### Version 1.8.0
 
 *   **Public Profile URL Slug:**
     *   **Routing:** The `go_router` configuration in `lib/router.dart` has been updated to handle dynamic profile slugs. The route `/profile/:slug` now correctly extracts the slug and passes it to the `ProfileScreen`.
