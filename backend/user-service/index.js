@@ -102,7 +102,7 @@ const generateAndUploadProfilePage = async (userData) => {
 
 const createAndUploadRedirectPage = async (oldSlug, newSlug) => {
     if (!oldSlug || !newSlug) return;
-    const newProfileUrl = `/profiles/${newSlug}`;
+    const newProfileUrl = `/profile/${newSlug}`;
     const redirectHtmlContent = `
         <!DOCTYPE html><html lang="en">
         <head>

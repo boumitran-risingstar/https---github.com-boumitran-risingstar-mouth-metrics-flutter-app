@@ -19,7 +19,7 @@ exports.profileHandler = functions.https.onRequest(async (req, res) => {
 
     const pathParts = req.path.split('/').filter(part => part.length > 0);
 
-    if (pathParts.length < 2 || pathParts[0] !== 'profiles') {
+    if (pathParts.length < 2 || pathParts[0] !== 'profile') {
         return res.status(404).send('Not Found: Invalid profile path.');
     }
 
@@ -54,7 +54,7 @@ exports.profileHandler = functions.https.onRequest(async (req, res) => {
             const currentSlug = userData.slug;
 
             if (currentSlug) {
-                const newUrl = `/profiles/${currentSlug}`;
+                const newUrl = `/profile/${currentSlug}`;
                 res.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
                 res.redirect(301, newUrl);
                 return;
