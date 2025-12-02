@@ -119,11 +119,15 @@ class UserService {
     final url = Uri.parse('$_serviceBaseUrl$_apiPath/users/$userId/photos');
     final request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $idToken';
+    
+    final fileExtension = image.path.split('.').last.toLowerCase();
+    final contentType = MediaType('image', fileExtension);
+
     request.files.add(
       await http.MultipartFile.fromPath(
         'photo',
         image.path,
-        contentType: MediaType('image', image.path.split('.').last),
+        contentType: contentType,
       ),
     );
 
@@ -148,12 +152,16 @@ class UserService {
     final request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $idToken';
 
+    final fileExtension = filename.split('.').last.toLowerCase();
+    final contentType = MediaType('image', fileExtension);
+
     request.files.add(
       http.MultipartFile.fromBytes(
         'photo',
         imageBytes,
         filename: filename, // Use the provided filename
-        contentType: MediaType('image', filename.split('.').last),      ),
+        contentType: contentType,
+      ),
     );
 
     final streamedResponse = await request.send();

@@ -111,10 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         errorMessage = 'Network error. Please check your connection.';
       } else if (e is Exception) {
         String exceptionString = e.toString();
-        if (exceptionString.contains('html') || exceptionString.contains('Unsupported Media Type')) {
-          errorMessage = 'Invalid file type. Please upload a JPEG or PNG image.';
-        } else if (exceptionString.contains('Status code: 413') || exceptionString.contains('File too large')) {
+        if (exceptionString.contains('Status code: 413') || exceptionString.contains('File too large')) {
             errorMessage = 'File upload failed. The file may be too large (max 2MB).';
+        } else if (exceptionString.contains('html') || exceptionString.contains('Unsupported Media Type')) {
+          errorMessage = 'Invalid file type. Please upload a JPEG or PNG image.';
         } else {
             errorMessage = 'Action failed: ${exceptionString.substring(0, exceptionString.length > 100 ? 100 : exceptionString.length)}';
         }
