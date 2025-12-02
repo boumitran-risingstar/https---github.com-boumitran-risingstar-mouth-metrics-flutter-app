@@ -1,3 +1,4 @@
+
 const express = require('express');
 const { Firestore, Timestamp } = require('@google-cloud/firestore');
 const { Storage } = require('@google-cloud/storage');
@@ -69,9 +70,10 @@ const generateUniqueSlug = async (name) => {
 const generateAndUploadProfilePage = async (userData) => {
     const { name, bio, profilePictureUrl, slug } = userData;
     if (!slug) {
-        console.error('Cannot generate profile page without a slug for user:', name);
+        console.error('Cannot generate profile page without a slug for user:', userData);
         return;
     }
+    const imageUrl = profilePictureUrl ? `https://user-service-402886834615.us-central1.run.app${profilePictureUrl}` : 'https://storage.googleapis.com/user-profile-pages/default-avatar.png';
     const htmlContent = `
         <!DOCTYPE html><html lang="en">
         <head>
@@ -88,7 +90,7 @@ const generateAndUploadProfilePage = async (userData) => {
         </head>
         <body>
             <div class="profile-card">
-                <img src="${profilePictureUrl || 'https://storage.googleapis.com/user-profile-pages/default-avatar.png'}" alt="Profile Picture">
+                <img src="${imageUrl}" alt="Profile Picture">
                 <h1>${name}</h1>
                 <p>${bio || 'No bio provided.'}</p>
             </div>
@@ -147,7 +149,7 @@ userRouter.post('/sync', authenticate, async (req, res) => {
             t.set(slugsCollection.doc(slug), { userId: uid });
         });
 
-        await generateAndUploadProfilePage(newUser);
+        await generateAndUploadProfilePage({ ...newUser, uid });
         res.status(201).send({ id: uid, ...newUser });
     } catch (error) {
         console.error('Error syncing user:', error);
@@ -179,7 +181,7 @@ userRouter.put('/:userId', authenticate, async (req, res) => {
         if (!userDoc.exists) return res.status(404).send('User not found');
 
         const currentData = userDoc.data();
-        const updatedData = { ...currentData };
+        const updatedData = { ...currentData, uid: userId };
         let newSlug = null, oldSlug = currentData.slug;
 
         if (email) updatedData.email = email;
@@ -229,16 +231,16 @@ userRouter.post('/:userId/photos', authenticate, upload.single('photo'), async (
         }
 
         const photoId = uuidv4();
-        const fileName = `user-photos/${userId}/${photoId}.jpg`;
+        const fileName = `user-photos/${userId}/${photoId}`;
         const file = profilesBucket.file(fileName);
 
         await file.save(req.file.buffer, { metadata: { contentType: 'image/jpeg' } });
         
-        const publicUrl = `https://storage.googleapis.com/${profilesBucketName}/${fileName}`;
+        const proxyUrl = `/photos/${userId}/${photoId}`; // The relative URL to store
 
         const newPhoto = {
             id: photoId,
-            url: publicUrl,
+            url: proxyUrl,
             isDefault: photoGallery.length === 0, // First photo is the default
             createdAt: Timestamp.now(),
         };
@@ -247,14 +249,14 @@ userRouter.post('/:userId/photos', authenticate, upload.single('photo'), async (
 
         const updatePayload = {
             photoGallery,
-            profilePictureUrl: newPhoto.isDefault ? publicUrl : userData.profilePictureUrl,
+            profilePictureUrl: newPhoto.isDefault ? proxyUrl : userData.profilePictureUrl,
         };
         
         await userRef.update(updatePayload);
 
         // Regenerate static page if the default picture changed
         if (newPhoto.isDefault) {
-            await generateAndUploadProfilePage({ ...userData, profilePictureUrl: publicUrl });
+            await generateAndUploadProfilePage({ ...userData, profilePictureUrl: proxyUrl, uid: userId });
         }
 
         res.status(201).send({ message: 'Photo uploaded successfully', photo: newPhoto, gallery: photoGallery });
@@ -264,8 +266,6 @@ userRouter.post('/:userId/photos', authenticate, upload.single('photo'), async (
         res.status(500).send('Error uploading photo');
     }
 });
-
-
 
 // Set a default photo
 userRouter.put('/:userId/photos/:photoId/default', authenticate, async (req, res) => {
@@ -293,7 +293,7 @@ userRouter.put('/:userId/photos/:photoId/default', authenticate, async (req, res
 
         await userRef.update({ photoGallery: updatedGallery, profilePictureUrl: newDefaultUrl });
 
-        await generateAndUploadProfilePage({ ...userData, profilePictureUrl: newDefaultUrl });
+        await generateAndUploadProfilePage({ ...userData, profilePictureUrl: newDefaultUrl, uid: userId });
 
         res.status(200).send({ message: 'Default photo updated successfully.', gallery: updatedGallery });
     } catch (error) {
@@ -319,7 +319,7 @@ userRouter.delete('/:userId/photos/:photoId', authenticate, async (req, res) => 
         if (!photoToDelete) return res.status(404).send('Photo not found in gallery.');
 
         // Delete file from GCS
-        const fileName = `user-photos/${userId}/${photoId}.jpg`;
+        const fileName = `user-photos/${userId}/${photoId}`;
         await profilesBucket.file(fileName).delete({ ignoreNotFound: true });
 
         let updatedGallery = photoGallery.filter(p => p.id !== photoId);
@@ -340,7 +340,7 @@ userRouter.delete('/:userId/photos/:photoId', authenticate, async (req, res) => 
         await userRef.update({ photoGallery: updatedGallery, profilePictureUrl: newDefaultUrl });
 
         if (pageNeedsUpdate) {
-            await generateAndUploadProfilePage({ ...userData, profilePictureUrl: newDefaultUrl });
+            await generateAndUploadProfilePage({ ...userData, profilePictureUrl: newDefaultUrl, uid: userId });
         }
 
         res.status(200).send({ message: 'Photo deleted successfully.', gallery: updatedGallery });
@@ -349,6 +349,26 @@ userRouter.delete('/:userId/photos/:photoId', authenticate, async (req, res) => 
         console.error('Error deleting photo:', error);
         res.status(500).send('Error deleting photo');
     }
+});
+
+
+// --- Public Photo Proxy (No Auth) ---
+app.get('/photos/:userId/:photoId', (req, res) => {
+    const { userId, photoId } = req.params;
+    const fileName = `user-photos/${userId}/${photoId}`;
+    const file = profilesBucket.file(fileName);
+
+    file.createReadStream()
+        .on('error', (err) => {
+            console.error('Error streaming file:', err);
+            res.status(404).send('Photo not found.');
+        })
+        .on('response', (response) => {
+            // Set caching headers
+            res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+            res.set('Content-Type', 'image/jpeg');
+        })
+        .pipe(res);
 });
 
 // --- Public Profile Route (No Auth) ---

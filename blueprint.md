@@ -20,25 +20,25 @@ This document outlines the design and features implemented in the application.
 
 ### Version 1.7.0 (Current)
 
-*   **User Photo Gallery Management (Backend & Frontend Plan):**
+*   **User Photo Gallery Management:**
     *   **Backend Deployed:** The `user-service` has been enhanced with a complete photo gallery management system.
         *   **New Data Model:** The user model in Firestore now includes a `photoGallery` field, which is an array of photo objects. Each photo object contains a unique `id`, a public `url`, a boolean `isDefault` flag, and a `createdAt` timestamp.
-        *   **Secure File Uploads:** The backend now uses `multer` for secure and efficient handling of image uploads. Cloud Storage rules have been implemented to enforce a 5MB file size limit and allow only JPEG/PNG image types.
+        *   **Secure File Uploads:** The backend now uses `multer` for secure and efficient handling of image uploads. Cloud Storage rules have been implemented to enforce a 2MB file size limit and allow only JPEG/PNG image types.
         *   **New API Endpoints:** Three new, secure endpoints have been added:
             *   `POST /api/users/:userId/photos`: Upload a new photo.
             *   `PUT /api/users/:userId/photos/:photoId/default`: Set a specific photo as the default profile picture.
             *   `DELETE /api/users/:userId/photos/:photoId`: Delete a photo from the gallery and from Cloud Storage.
 
-    *   **Frontend Implementation Plan:**
+    *   **Frontend Implemented:**
         *   **Profile Screen UI Overhaul:**
-            *   The existing single profile picture display on the `profile_screen.dart` will be replaced with a more dynamic photo gallery.
-            *   The main profile picture at the top of the screen will display the photo from the gallery where `isDefault` is `true`.
-            *   A grid or row of thumbnails will be displayed below the main picture, showing all photos in the user's `photoGallery`.
+            *   The `profile_screen.dart` has been updated with a dynamic photo gallery.
+            *   The main profile picture at the top of the screen displays the photo from the gallery where `isDefault` is `true`.
+            *   A grid of thumbnails is displayed below the main picture, showing all photos in the user's `photoGallery`.
         *   **Photo Management UI:**
-            *   An "Upload Photo" button will be added to allow users to select and upload new images.
-            *   Tapping on a thumbnail will provide options to "Set as Default" or "Delete" the photo. A confirmation dialog will be used for the delete action to prevent accidental deletions.
+            *   An "Upload Photo" button allows users to select and upload new images.
+            *   Tapping on a thumbnail provides options to "Set as Default" or "Delete" the photo. A confirmation dialog is used for the delete action to prevent accidental deletions.
         *   **Updated Frontend Service (`user_service.dart`):**
-            *   New methods (`uploadPhoto`, `deletePhoto`, `setDefaultPhoto`) will be created to interact with the new backend endpoints.
+            *   New methods (`uploadPhoto`, `deletePhoto`, `setDefaultPhoto`) have been created to interact with the new backend endpoints.
 
 ### Version 1.6.0
 

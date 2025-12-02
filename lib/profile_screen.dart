@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -6,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fba;
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
 import 'package:mouth_metrics/services/user_service.dart';
@@ -102,10 +102,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final newGallery = await action();
-      _userNotifier.value = _userNotifier.value?.copyWith(photoGallery: newGallery);
+      final newDefaultPhoto = newGallery.firstWhere((p) => p.isDefault, orElse: () => newGallery.isNotEmpty ? newGallery.first : app_user.Photo(id: '', url: '', isDefault: false, createdAt: DateTime.now()));
+      _userNotifier.value = _userNotifier.value?.copyWith(photoGallery: newGallery, profilePictureUrl: newDefaultPhoto.url);
       _showSuccessSnackBar(successMessage);
     } catch (e) {
-      _showErrorSnackBar('Action failed: $e');
+      String errorMessage = 'An unexpected error occurred.';
+      if (e is http.ClientException) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (e is Exception) {
+        String exceptionString = e.toString();
+        if (exceptionString.contains('html') || exceptionString.contains('Unsupported Media Type')) {
+          errorMessage = 'Invalid file type. Please upload a JPEG or PNG image.';
+        } else if (exceptionString.contains('Status code: 413') || exceptionString.contains('File too large')) {
+            errorMessage = 'File upload failed. The file may be too large (max 2MB).';
+        } else {
+            errorMessage = 'Action failed: ${exceptionString.substring(0, exceptionString.length > 100 ? 100 : exceptionString.length)}';
+        }
+      }
+      _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
         setState(() {
@@ -114,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
+
 
   Future<void> _pickAndUploadImage() async {
     final fba.User? currentUser = fba.FirebaseAuth.instance.currentUser;
@@ -234,10 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileAvatar(app_user.User user) {
-    final defaultPhoto = user.photoGallery.firstWhere(
-      (p) => p.isDefault,
-      orElse: () => user.photoGallery.isNotEmpty ? user.photoGallery.first : app_user.Photo(id: '', url: '', isDefault: false, createdAt: DateTime.now()),
-    );
+    final imageUrl = _userService.getFullPhotoUrl(user.profilePictureUrl);
 
     return Center(
       child: Stack(
@@ -245,10 +257,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           CircleAvatar(
             radius: 60,
             backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-            backgroundImage: (defaultPhoto.url.isNotEmpty)
-                ? CachedNetworkImageProvider(defaultPhoto.url)
+            backgroundImage: (imageUrl != null)
+                ? CachedNetworkImageProvider(imageUrl)
                 : null,
-            child: (defaultPhoto.url.isEmpty)
+            child: (imageUrl == null)
                 ? const Icon(Icons.person, size: 60)
                 : null,
           ),
@@ -296,6 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemCount: user.photoGallery.length,
                 itemBuilder: (context, index) {
                   final photo = user.photoGallery[index];
+                  final imageUrl = _userService.getFullPhotoUrl(photo.url);
                   return GestureDetector(
                     onTap: () => _showPhotoOptions(context, photo),
                     child: Stack(
@@ -303,12 +316,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: photo.url,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Colors.grey[300]),
-                            errorWidget: (context, url, error) => const Icon(Icons.error),
-                          ),
+                          child: imageUrl != null 
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(color: Colors.grey[300]),
+                                errorWidget: (context, url, error) => const Icon(Icons.error),
+                              )
+                            : Container(color: Colors.grey[300], child: const Icon(Icons.broken_image)),
                         ),
                         if (photo.isDefault)
                           Positioned(

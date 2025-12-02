@@ -1,20 +1,26 @@
-
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
 
 class UserService {
-  // Base URL for the Cloud Run service
-  final String _serviceBaseUrl = 'https://user-service-402886834615.us-central1.run.app';
-  // Path for the authenticated API endpoints
+  // Dynamically set the base URL based on the environment
+  final String _serviceBaseUrl = 'https://user-service-402886834615.us-central1.run.app'; // Deployed service
+
   final String _apiPath = '/api';
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String? getFullPhotoUrl(String? relativeUrl) {
+    if (relativeUrl == null || relativeUrl.isEmpty) return null;
+    if (relativeUrl.startsWith('http')) return relativeUrl; // Already a full URL
+    return _serviceBaseUrl + relativeUrl;
+  }
 
   Future<String?> _getIdToken() async {
     final User? user = _auth.currentUser;
