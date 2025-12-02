@@ -73,7 +73,13 @@ const generateAndUploadProfilePage = async (userData) => {
         console.error('Cannot generate profile page without a slug for user:', userData);
         return;
     }
-    const imageUrl = profilePictureUrl ? `https://user-service-402886834615.us-central1.run.app${profilePictureUrl}` : 'https://storage.googleapis.com/user-profile-pages/default-avatar.png';
+    const imageElement = profilePictureUrl
+        ? `<img src="https://user-service-402886834615.us-central1.run.app${profilePictureUrl}" alt="Profile Picture">`
+        : `<div class="default-icon">
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ccc" width="100px" height="100px">
+                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+               </svg>
+           </div>`;
     const htmlContent = `
         <!DOCTYPE html><html lang="en">
         <head>
@@ -84,13 +90,17 @@ const generateAndUploadProfilePage = async (userData) => {
                 body { font-family: sans-serif; text-align: center; margin-top: 50px; background-color: #f0f2f5; }
                 .profile-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; }
                 img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; }
+                .default-icon {
+                    width: 150px; height: 150px; border-radius: 50%; background-color: #e0e0e0;
+                    display: inline-flex; justify-content: center; align-items: center; border: 4px solid #fff;
+                }
                 h1 { margin-top: 15px; }
                 p { color: #666; }
             </style>
         </head>
         <body>
             <div class="profile-card">
-                <img src="${imageUrl}" alt="Profile Picture">
+                ${imageElement}
                 <h1>${name}</h1>
                 <p>${bio || 'No bio provided.'}</p>
             </div>
