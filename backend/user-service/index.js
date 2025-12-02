@@ -183,25 +183,41 @@ userRouter.put('/:userId', authenticate, async (req, res) => {
         const currentData = userDoc.data();
         const updatedData = { ...currentData, uid: userId };
         let newSlug = null, oldSlug = currentData.slug;
+        let needsPageUpdate = false;
 
-        if (email) updatedData.email = email;
-        if (bio) updatedData.bio = bio;
+        if (email) {
+            updatedData.email = email;
+        }
+        if (bio && bio !== currentData.bio) {
+            updatedData.bio = bio;
+            needsPageUpdate = true;
+        }
         if (name && name !== currentData.name) {
             updatedData.name = name;
             newSlug = await generateUniqueSlug(name);
             updatedData.slug = newSlug;
             updatedData.slugHistory = [oldSlug, ...(currentData.slugHistory || [])];
+            needsPageUpdate = true;
+        } else {
+            updatedData.slug = currentData.slug;
         }
+
 
         await firestore.runTransaction(async (t) => {
             const payload = { name: updatedData.name, bio: updatedData.bio, email: updatedData.email, slug: updatedData.slug, slugHistory: updatedData.slugHistory };
             Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
             t.update(userRef, payload);
-            if (newSlug) t.set(slugsCollection.doc(newSlug), { userId });
+            if (newSlug) {
+                t.set(slugsCollection.doc(newSlug), { userId });
+            }
         });
 
-        await generateAndUploadProfilePage(updatedData);
-        if (newSlug) await createAndUploadRedirectPage(oldSlug, newSlug);
+        if (needsPageUpdate) {
+            await generateAndUploadProfilePage(updatedData);
+        }
+        if (newSlug) {
+            await createAndUploadRedirectPage(oldSlug, newSlug);
+        }
 
         res.status(200).send({ message: 'Profile updated', newSlug });
     } catch (error) {
