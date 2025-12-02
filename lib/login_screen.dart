@@ -168,6 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         length: 6,
                         controller: _otpController,
                         onCompleted: (pin) => _verifyOtp(),
+                        autofocus: true,
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
