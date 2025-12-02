@@ -25,9 +25,10 @@ final GoRouter router = GoRouter(
           },
         ),
         GoRoute(
-          path: 'profile',
+          path: 'profile/:slug',
           builder: (context, state) {
-            return const ProfileScreen();
+            final slug = state.pathParameters['slug']!;
+            return ProfileScreen(slug: slug);
           },
         ),
       ],

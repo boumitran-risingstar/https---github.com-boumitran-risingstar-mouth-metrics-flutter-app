@@ -4,6 +4,23 @@
 
 Mouth Metrics is a Flutter application designed to be a personal dental health companion. It aims to provide users with tools and insights to better track and understand their oral hygiene habits and health. The application is built with a focus on a modern, clean, and intuitive user interface.
 
+## Current Task: Implement Public Profile URL Slug
+
+### Plan:
+
+1.  **Update Router:** Modify `lib/router.dart` to include a dynamic slug in the `/profile` route (e.g., `/profile/:slug`).
+2.  **Update User Service:** Add a `getUserBySlug` method to `lib/services/user_service.dart` to fetch user data from the public-facing endpoint.
+3.  **Update Profile Screen:** Modify `lib/profile_screen.dart` to:
+    *   Accept the `slug` as a parameter.
+    *   Fetch user data based on the slug if it's provided.
+    *   Conditionally render a read-only public view or the editable profile view based on whether it's the user's own profile.
+
+### Implemented Steps:
+
+*   **Router Updated:** The `/profile` route in `lib/router.dart` is now `/profile/:slug`, and it passes the `slug` to the `ProfileScreen`.
+*   **User Service Updated:** The `user_service.dart` now has a `getUserBySlug(String slug)` method that fetches public user data.
+*   **Profile Screen Updated:** The `ProfileScreen` now accepts a `slug`, fetches the appropriate user, and displays either an editable view (for the logged-in user) or a public, read-only view.
+
 ## Backend Services
 
 The application is supported by a set of backend microservices that handle business logic and data persistence.
@@ -18,7 +35,17 @@ The application is supported by a set of backend microservices that handle busin
 
 This document outlines the design and features implemented in the application.
 
-### Version 1.7.0 (Current)
+### Version 1.8.0 (Current)
+
+*   **Public Profile URL Slug:**
+    *   **Routing:** The `go_router` configuration in `lib/router.dart` has been updated to handle dynamic profile slugs. The route `/profile/:slug` now correctly extracts the slug and passes it to the `ProfileScreen`.
+    *   **Data Fetching:** The `user_service.dart` has a new `getUserBySlug(String slug)` method that fetches a user's public profile data from the backend using the new endpoint.
+    *   **Dynamic Profile Screen:** The `profile_screen.dart` is now more flexible:
+        *   It accepts an optional `slug` parameter. If the `slug` is present, it fetches and displays the public profile of the corresponding user.
+        *   If no `slug` is provided, it defaults to showing the currently logged-in user's editable profile.
+        *   The UI now differentiates between the two modes, showing a read-only view for public profiles and the full editing form for the user's own profile.
+
+### Version 1.7.0
 
 *   **User Photo Gallery Management:**
     *   **Backend Deployed:** The `user-service` has been enhanced with a complete photo gallery management system.

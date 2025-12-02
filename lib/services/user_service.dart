@@ -87,6 +87,22 @@ class UserService {
       throw Exception('Failed to get user: ${response.body}');
     }
   }
+  
+  Future<app_user.User?> getUserBySlug(String slug) async {
+    final profileUrl = Uri.parse('$_serviceBaseUrl/profile/$slug');
+    final response = await http.get(
+      profileUrl,
+      headers: {'cache-control': 'no-cache'},
+    );
+
+    if (response.statusCode == 200) {
+      return app_user.User.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception('Failed to load profile for slug $slug: ${response.body}');
+    }
+  }
 
   Future<void> updateUser(String uid, {String? name, String? bio, String? email}) async {
     final idToken = await _getIdToken();

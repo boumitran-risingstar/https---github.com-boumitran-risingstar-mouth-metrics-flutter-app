@@ -11,7 +11,8 @@ import 'package:mouth_metrics/models/user_model.dart' as app_user;
 import 'package:mouth_metrics/services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String? slug;
+  const ProfileScreen({super.key, this.slug});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -27,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserService _userService = UserService();
   final ImagePicker _picker = ImagePicker();
   final ValueNotifier<app_user.User?> _userNotifier = ValueNotifier(null);
+  late final bool _isMyProfile;
 
   bool _isSaving = false;
   bool _isProcessingPhoto = false;
@@ -34,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _isMyProfile = widget.slug == null;
     _loadInitialUserData();
   }
 
@@ -56,6 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<app_user.User?> _fetchUserData() async {
     final fba.User? currentUser = fba.FirebaseAuth.instance.currentUser;
+    if (widget.slug != null) {
+      return await _userService.getUserBySlug(widget.slug!);
+    }
     if (currentUser == null) {
       _showErrorSnackBar('You need to be logged in.');
       return null;
@@ -218,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text(_isMyProfile ? 'Edit Profile' : 'Profile'),
         elevation: 0,
       ),
       body: ValueListenableBuilder<app_user.User?>(
@@ -237,9 +243,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
                 _buildPhotoGallery(user),
                 const SizedBox(height: 32),
-                _buildProfileForm(),
-                const SizedBox(height: 32),
-                _buildSaveChangesButton(),
+                if (_isMyProfile) _buildProfileForm(),
+                if (_isMyProfile) const SizedBox(height: 32),
+                if (_isMyProfile) _buildSaveChangesButton(),
+                if (!_isMyProfile) _buildPublicProfileView(user),
               ],
             ),
           );
@@ -264,24 +271,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ? const Icon(Icons.person, size: 60)
                 : null,
           ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Material(
-              color: Theme.of(context).colorScheme.primary,
-              shape: const CircleBorder(),
-              child: InkWell(
-                onTap: _isProcessingPhoto ? null : _pickAndUploadImage,
-                customBorder: const CircleBorder(),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: _isProcessingPhoto
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+          if (_isMyProfile)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Material(
+                color: Theme.of(context).colorScheme.primary,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: _isProcessingPhoto ? null : _pickAndUploadImage,
+                  customBorder: const CircleBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: _isProcessingPhoto
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -291,11 +299,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('My Photo Gallery', style: Theme.of(context).textTheme.titleLarge),
+        Text('Photo Gallery', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         user.photoGallery.isEmpty
             ? const Center(
-                child: Text('Upload your first photo!'),
+                child: Text('No photos yet!'),
               )
             : GridView.builder(
                 shrinkWrap: true,
@@ -310,7 +318,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final photo = user.photoGallery[index];
                   final imageUrl = _userService.getFullPhotoUrl(photo.url);
                   return GestureDetector(
-                    onTap: () => _showPhotoOptions(context, photo),
+                    onTap: () => _isMyProfile ? _showPhotoOptions(context, photo) : null,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -336,6 +344,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+      ],
+    );
+  }
+  
+  Widget _buildPublicProfileView(app_user.User user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(user.name ?? 'No name', style: Theme.of(context).textTheme.headlineMedium),
+        const SizedBox(height: 8),
+        Text(user.bio ?? 'No bio yet', style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 16),
+        if (user.email != null)
+          Row(
+            children: [
+              const Icon(Icons.email_outlined, size: 16),
+              const SizedBox(width: 8),
+              Text(user.email!),
+            ],
+          ),
       ],
     );
   }
