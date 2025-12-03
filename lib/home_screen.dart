@@ -139,7 +139,7 @@ class HomeScreen extends StatelessWidget {
               title: const Text('Find Dental Clinics'),
               subtitle: const Text('Search for clinics near you'),
               trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => context.go('/nearby-clinics'),
+              onTap: () => context.push('/nearby-clinics'),
             ),
           ),
           const SizedBox(height: 24),
