@@ -6,17 +6,7 @@ Mouth Metrics is a Flutter application designed to be a personal dental health c
 
 ## Current Task
 
-### AI-Powered "Article of the Day"
-
-This feature will make the app more dynamic and engaging by using generative AI to create a unique article every time a user opens the app.
-
-**Plan:**
-
-1.  **Integrate Generative AI:** Add the `firebase_ai` package to the project.
-2.  **Generate Article Content:** Use the Gemini API to generate an article title and paragraph.
-3.  **Generate an Image:** Use Imagen to generate a relevant image.
-4.  **Update the UI:** Modify `home_screen.dart` to display the AI-generated content using a `FutureBuilder`.
-5.  **Refine the UI:** Polish the article card with modern styling.
+No active development task. The focus is on monitoring and maintenance.
 
 ## Style, Design, and Features
 
@@ -32,7 +22,7 @@ This document outlines the design and features implemented in the application.
     *   **Navigation:** Added a "My Business" link in the app's navigation drawer, which is visible only to authenticated users and navigates them to their business profile management screen.
     *   **Routing:** The application's router (`lib/router.dart`) was updated to include the new `/business-profile` route.
 
-### Version 1.9.0 (Current)
+### Version 1.9.0
 
 *   **Geo-Aware Directory (Map Integration):**
     *   **Interactive Map View:** The "Nearby Dental Clinics" feature has been significantly enhanced with an interactive map view.
@@ -193,3 +183,17 @@ This document outlines the design and features implemented in the application.
         *   `provider` is used for theme management (`ThemeProvider`).
 *   **Routing:**
     *   `go_router` was added and configured to handle navigation between the landing page and the home screen.
+
+## Backlog
+
+### AI-Powered "Article of the Day"
+
+This feature will make the app more dynamic and engaging by using generative AI to create a unique article every time a user opens the app.
+
+**Plan:**
+
+1.  **Integrate Generative AI:** Add the `firebase_ai` package to the project.
+2.  **Generate Article Content:** Use the Gemini API to generate an article title and paragraph.
+3.  **Generate an Image:** Use Imagen to generate a relevant image.
+4.  **Update the UI:** Modify `home_screen.dart` to display the AI-generated content using a `FutureBuilder`.
+5.  **Refine the UI:** Polish the article card with modern styling.

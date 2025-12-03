@@ -51,6 +51,6 @@ build/
 /ios/Runner.xcworkspace/
 
 # Firebase cache and log files
-.firebase/
+.firebase
 *.log
 firebase-debug.log
