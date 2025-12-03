@@ -1,3 +1,4 @@
+
 const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
@@ -44,8 +45,8 @@ app.get('/', (req, res) => {
   res.send('Business management service is running');
 });
 
-// Public endpoint to find nearby businesses
-app.get('/api/businesses/nearby', async (req, res) => {
+// Authenticated endpoint to find nearby businesses
+app.get('/api/businesses/nearby', authenticate, async (req, res) => {
     const { lat, lng, radius } = req.query;
 
     if (!lat || !lng || !radius) {
