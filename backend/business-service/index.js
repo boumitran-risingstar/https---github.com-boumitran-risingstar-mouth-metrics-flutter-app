@@ -195,6 +195,25 @@ app.get('/api/businesses/my-businesses', authenticate, async (req, res) => {
     }
 });
 
+// Get a single business by ID
+app.get('/api/businesses/:id', authenticate, async (req, res) => {
+    try {
+        const businessId = req.params.id;
+        const docRef = db.collection('businesses').doc(businessId);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).send('Business not found.');
+        }
+
+        res.status(200).send({ id: doc.id, ...doc.data() });
+
+    } catch (error) {
+        console.error('Error fetching business:', error);
+        res.status(500).send('Error fetching business data.');
+    }
+});
+
 
 // Example authenticated route
 app.get('/businesses', authenticate, (req, res) => {

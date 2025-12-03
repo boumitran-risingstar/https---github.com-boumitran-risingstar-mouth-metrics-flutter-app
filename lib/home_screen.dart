@@ -78,16 +78,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     case 'my_businesses':
                       context.push('/my-businesses');
                       break;
-                    case 'business_profile':
-                      context.push('/business-profile');
-                      break;
                     case 'logout':
                       _signOut(context);
                       break;
                   }
                 },
                 itemBuilder: (BuildContext context) {
-                  final menuItems = <PopupMenuEntry<String>>[
+                  return [
                     const PopupMenuItem<String>(
                       value: 'profile',
                       child: ListTile(
@@ -102,11 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: Text('My Businesses'),
                       ),
                     ),
-                  ];
-
-                  
-
-                  menuItems.addAll([
                     const PopupMenuDivider(),
                     const PopupMenuItem<String>(
                       value: 'logout',
@@ -115,9 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: Text('Logout'),
                       ),
                     ),
-                  ]);
-
-                  return menuItems;
+                  ];
                 },
               ),
             ],
@@ -131,35 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
-              ),
-              const SizedBox(height: 24),
-
-              // Daily Tip Card
-              Card(
-                elevation: 2.0,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daily Tip',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Text(
-                        'Don\'t forget to floss! It\'s as important as brushing for preventing cavities and gum disease.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(height: 24),
 
@@ -210,48 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => context.push('/find-specialists'),
                   ),
                 ),
-
-              const SizedBox(height: 24),
-
-              // Article of the Day Card
-              Card(
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                elevation: 2.0,
-                child: Stack(
-                  alignment: Alignment.bottomLeft,
-                  children: [
-                    Image.network(
-                      'https://images.pexels.com/photos/5935791/pexels-photo-5935791.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                    Container(
-                      height: 200,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.black, Colors.transparent],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.center,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        'The Surprising Benefits of Oil Pulling',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         );
