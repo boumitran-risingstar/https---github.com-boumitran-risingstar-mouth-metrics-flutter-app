@@ -55,8 +55,12 @@ app.post('/api/businesses', authenticate, async (req, res) => {
             return res.status(400).send('Missing required fields: name and location are required.');
         }
 
-        const lat = location.latitude || location._latitude;
-        const lng = location.longitude || location._longitude;
+        const lat = location.latitude;
+        const lng = location.longitude;
+
+        if (typeof lat !== 'number' || typeof lng !== 'number') {
+            return res.status(400).send('Invalid location data: latitude and longitude must be numbers.');
+        }
 
         const geohash = geofire.geohashForLocation([lat, lng]);
 
@@ -100,8 +104,13 @@ app.put('/api/businesses/:id', authenticate, async (req, res) => {
         
         // If location is being updated, recalculate the geohash
         if (updateData.location) {
-             const lat = updateData.location.latitude || updateData.location._latitude;
-             const lng = updateData.location.longitude || updateData.location._longitude;
+             const lat = updateData.location.latitude;
+             const lng = updateData.location.longitude;
+
+            if (typeof lat !== 'number' || typeof lng !== 'number') {
+                return res.status(400).send('Invalid location data: latitude and longitude must be numbers.');
+            }
+
              updateData.geohash = geofire.geohashForLocation([lat, lng]);
              updateData.location = new admin.firestore.GeoPoint(lat, lng);
         }
