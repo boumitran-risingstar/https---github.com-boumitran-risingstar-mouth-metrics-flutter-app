@@ -63,7 +63,10 @@ class Business {
       'description': description,
       'image': image,
       'services': services,
-      'location': location,
+      'location': {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      },
       'category': category,
       'ownerId': ownerId,
       'geohash': geohash,
