@@ -22,6 +22,16 @@ This feature will make the app more dynamic and engaging by using generative AI 
 
 This document outlines the design and features implemented in the application.
 
+### Version 2.0.0
+
+*   **Dental Clinic Business Profile Management:**
+    *   **Authenticated Access:** Implemented a feature for authenticated users to create and manage their dental clinic's business profile.
+    *   **Business Profile Screen:** Created a new screen (`business_profile_screen.dart`) where users can input and update their business details, including name, address, phone number, website, and operating hours.
+    *   **Unique Slug for Business:** The backend `business-service` now generates a unique, URL-friendly slug for each business profile. This slug is used for creating a public-facing URL for the business.
+    *   **Frontend-Backend Integration:** The `business_service.dart` on the frontend communicates with the secure `business-service` backend to handle all CRUD (Create, Read, Update, Delete) operations for the business profile.
+    *   **Navigation:** Added a "My Business" link in the app's navigation drawer, which is visible only to authenticated users and navigates them to their business profile management screen.
+    *   **Routing:** The application's router (`lib/router.dart`) was updated to include the new `/business-profile` route.
+
 ### Version 1.9.0 (Current)
 
 *   **Geo-Aware Directory (Map Integration):**
