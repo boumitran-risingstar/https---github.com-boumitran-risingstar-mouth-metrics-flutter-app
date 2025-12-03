@@ -4,6 +4,50 @@
 
 Mouth Metrics is a Flutter application designed to be a personal dental health companion. It aims to provide users with tools and insights to better track and understand their oral hygiene habits and health. The application is built with a focus on a modern, clean, and intuitive user interface.
 
+## Backlog
+
+### Geo-Aware Business & Specialist Directory (High Priority)
+
+This feature will build a directory of dental businesses and professionals with location-based search capabilities for both patients and clinics.
+
+**Phase 1: Foundation (Data Models & Location Services)**
+
+1.  **Update Data Models:**
+    *   **`business_model.dart`:** Add a `GeoPoint` location field and a `category` field (e.g., 'Dental Clinic', 'Orthodontics').
+    *   **`user_model.dart`:** Add a `userType` field ('Patient' vs. 'Professional') and a location field for professionals.
+2.  **Location Services:**
+    *   Integrate the `location` package.
+    *   Implement a helper service for requesting permissions and fetching the user's current location.
+
+**Phase 2: Patient-Facing Feature ("Find Dental Clinics Near Me")**
+
+1.  **Backend (`business-service`):**
+    *   Create a public API endpoint (`GET /api/businesses/nearby`) that accepts coordinates and a radius to find nearby clinics.
+2.  **Frontend (UI & Service Integration):**
+    *   Add a "Find Dental Clinics Near Me" button to the `home_screen`.
+    *   Create a `results_screen.dart` to display clinics returned by the API.
+    *   Integrate `google_maps_flutter` to show results on a map.
+
+**Phase 3: Business-Facing Feature ("Find Consultants Near Clinic")**
+
+1.  **Backend (`user-service`):**
+    *   Create a secure API endpoint (`GET /api/professionals/nearby`) for authenticated business users to find nearby professionals.
+2.  **Frontend (UI & Service Integration):**
+    *   Design a conditional dashboard for business-type users.
+    *   Implement a "Find Specialists" UI that calls the secure backend and displays professional profiles.
+
+### AI-Powered "Article of the Day"
+
+This feature will make the app more dynamic and engaging by using generative AI to create a unique article every time a user opens the app.
+
+**Plan:**
+
+1.  **Integrate Generative AI:** Add the `firebase_ai` package to the project.
+2.  **Generate Article Content:** Use the Gemini API to generate an article title and paragraph.
+3.  **Generate an Image:** Use Imagen to generate a relevant image.
+4.  **Update the UI:** Modify `home_screen.dart` to display the AI-generated content using a `FutureBuilder`.
+5.  **Refine the UI:** Polish the article card with modern styling.
+
 ## Current Task: Implement Public Profile URL Slug
 
 ### Plan:
