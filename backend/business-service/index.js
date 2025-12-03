@@ -207,7 +207,9 @@ app.put('/api/businesses/:id', authenticate, async (req, res) => {
             const oldSlug = businessData.slug;
 
             updateData.slug = newSlug;
-            updateData.slugHistory = [...(businessData.slugHistory || []), oldSlug];
+            if (oldSlug) { 
+              updateData.slugHistory = [...(businessData.slugHistory || []), oldSlug];
+            }
         }
 
 
