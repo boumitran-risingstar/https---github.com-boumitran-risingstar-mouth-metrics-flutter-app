@@ -176,6 +176,25 @@ app.get('/api/businesses/nearby', authenticate, async (req, res) => {
     }
 });
 
+// Get all businesses for the current user
+app.get('/api/businesses/my-businesses', authenticate, async (req, res) => {
+    try {
+        const ownerId = req.user.uid;
+        const snapshot = await db.collection('businesses').where('ownerId', '==', ownerId).get();
+        
+        const businesses = [];
+        snapshot.forEach(doc => {
+            businesses.push({ id: doc.id, ...doc.data() });
+        });
+        
+        res.status(200).send(businesses);
+
+    } catch (error) {
+        console.error('Error fetching user businesses:', error);
+        res.status(500).send('Error fetching user businesses.');
+    }
+});
+
 
 // Example authenticated route
 app.get('/businesses', authenticate, (req, res) => {

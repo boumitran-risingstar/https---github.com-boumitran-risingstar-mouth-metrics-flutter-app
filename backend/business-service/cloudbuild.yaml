@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/business-service:latest', '.' ]
+  args: [ 'build', '-t', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/business-service:latest', 'backend/business-service' ]
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'push', 'us-central1-docker.pkg.dev/mouth-metrics-flutter-app/artifacts/business-service:latest' ]
 - name: 'gcr.io/cloud-builders/gcloud'

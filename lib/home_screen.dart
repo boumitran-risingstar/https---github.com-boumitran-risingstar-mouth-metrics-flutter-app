@@ -95,29 +95,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: Text('My Profile'),
                       ),
                     ),
-                  ];
-
-                  if (user.isBusinessOwner) {
-                    menuItems.add(
-                      const PopupMenuItem<String>(
-                        value: 'my_businesses',
-                        child: ListTile(
-                          leading: Icon(Icons.store_mall_directory_outlined),
-                          title: Text('My Businesses'),
-                        ),
-                      ),
-                    );
-                  }
-
-                  menuItems.add(
                     const PopupMenuItem<String>(
-                      value: 'business_profile',
+                      value: 'my_businesses',
                       child: ListTile(
-                        leading: Icon(Icons.business_center_outlined),
-                        title: Text('Business Profile'),
+                        leading: Icon(Icons.store_mall_directory_outlined),
+                        title: Text('My Businesses'),
                       ),
                     ),
-                  );
+                  ];
+
+                  
 
                   menuItems.addAll([
                     const PopupMenuDivider(),
@@ -188,6 +175,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: const Text('Search for clinics near you'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () => context.push('/nearby-clinics'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // My Businesses Card
+              Card(
+                elevation: 2.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.store_mall_directory_outlined),
+                  title: const Text('My Businesses'),
+                  subtitle: const Text('Create and manage your businesses'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => context.push('/my-businesses'),
                 ),
               ),
               const SizedBox(height: 24),
