@@ -4,6 +4,7 @@ const admin = require('firebase-admin');
 const cors = require('cors');
 const geofire = require('geofire-common');
 const { Storage } = require('@google-cloud/storage');
+const fs = require('fs').promises; // Use promises-based fs
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -24,94 +25,34 @@ const storage = new Storage();
 const bucketName = 'business-profile-pages'; 
 const businessPagesBucket = storage.bucket(bucketName);
 
-// Function to generate HTML for a business profile
-const generateBusinessPageHTML = (businessData) => {
-    const imageTag = businessData.image 
-        ? `<img src="${businessData.image}" alt="${businessData.name}" style="max-width: 100%; border-radius: 8px;">`
-        : `<svg xmlns="http://www.w3.org/2000/svg" height="100" viewBox="0 0 24 24" width="100" fill="#4A90E2"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H9v-4h6v4zm0-5H9V9h6v4zm0-5H9V5h6v3z"/></svg>`;
+// --- Template Loading ---
+let profileTemplate = '';
 
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${businessData.name}</title>
-            <meta name="description" content="${businessData.description}">
-            <meta property="og:title" content="${businessData.name}" />
-            <meta property="og:description" content="${businessData.description}" />
-            <meta property="og:image" content="${businessData.image}" />
-            <meta property="og:type" content="website" />
-            <style>
-                body {
-                    font-family: sans-serif;
-                    background-color: #f4f4f9;
-                    color: #333;
-                    margin: 0;
-                    padding: 20px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                }
-                .business-card {
-                    background-color: #fff;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                    padding: 40px;
-                    max-width: 600px;
-                    width: 100%;
-                    text-align: center;
-                }
-                h1 {
-                    color: #4A90E2;
-                    font-size: 2.2em;
-                    margin-bottom: 10px;
-                }
-                h2 {
-                    color: #333;
-                    border-top: 1px solid #eee;
-                    padding-top: 20px;
-                    margin-top: 20px;
-                }
-                p {
-                    font-size: 1.1em;
-                    line-height: 1.6;
-                }
-                ul {
-                    list-style-type: none;
-                    padding: 0;
-                }
-                li {
-                    background-color: #f0f8ff;
-                    border-radius: 5px;
-                    padding: 10px;
-                    margin-bottom: 8px;
-                }
-                .image-container {
-                    margin-bottom: 20px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="business-card">
-                <div class="image-container">
-                    ${imageTag}
-                </div>
-                <h1>${businessData.name}</h1>
-                <p>${businessData.description}</p>
-                
-                ${businessData.services && businessData.services.length > 0 ?
-                    `<h2>Services</h2>
-                     <ul>
-                         ${businessData.services.map(service => `<li>${service}</li>`).join('')}
-                     </ul>` : ''
-                }
-            </div>
-        </body>
-        </html>
-    `;
+const loadTemplate = async () => {
+    try {
+        profileTemplate = await fs.readFile('business-profile-template.html', 'utf-8');
+        console.log('Business profile template loaded successfully.');
+    } catch (error) {
+        console.error('Failed to load business profile template:', error);
+        // Fallback to a basic template if loading fails
+        profileTemplate = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><title>{{BUSINESS_NAME}}</title></head>
+            <body><h1>{{BUSINESS_NAME}}</h1><p>{{BUSINESS_ADDRESS}}</p></body>
+            </html>
+        `;
+    }
 };
+
+// Function to generate HTML for a business profile from the template
+const generateBusinessPageHTML = (businessData) => {
+    let html = profileTemplate;
+    html = html.replace(/{{BUSINESS_NAME}}/g, businessData.name);
+    html = html.replace(/{{BUSINESS_ADDRESS}}/g, businessData.address || 'Address not available'); // Handle missing address
+    return html;
+};
+
 
 // Function to upload HTML to Google Cloud Storage
 const uploadHtmlToGcs = async (slug, htmlContent) => {
@@ -185,7 +126,7 @@ app.get('/', (req, res) => {
 // Create a new business profile
 app.post('/api/businesses', authenticate, async (req, res) => {
     try {
-        const { name, description, image, services, location, category } = req.body;
+        const { name, description, image, services, location, category, address } = req.body;
         const ownerId = req.user.uid;
 
         if (!name || !location || !category) {
@@ -210,6 +151,7 @@ app.post('/api/businesses', authenticate, async (req, res) => {
             services: services || [],
             location: new admin.firestore.GeoPoint(lat, lng),
             category: category || '',
+            address: address || '',
             ownerId,
             geohash,
             slug,
@@ -417,6 +359,9 @@ app.get('/businesses', authenticate, (req, res) => {
   ]);
 });
 
-app.listen(port, () => {
-  console.log(`Business service listening on port ${port}`);
+// Start the server after loading the template
+loadTemplate().then(() => {
+    app.listen(port, () => {
+        console.log(`Business service listening on port ${port}`);
+    });
 });
