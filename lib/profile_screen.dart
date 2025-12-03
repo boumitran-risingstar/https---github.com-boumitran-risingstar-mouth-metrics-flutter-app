@@ -102,9 +102,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _handlePhotoAction(Future<List<app_user.Photo>> Function() action, String successMessage) async {
     if (_isProcessingPhoto) return;
 
-    setState(() {
-      _isProcessingPhoto = true;
-    });
+    if(mounted){
+      setState(() {
+        _isProcessingPhoto = true;
+      });
+    }
 
     try {
       final newGallery = await action();
@@ -193,9 +195,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _updateUserProfile() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
+       if(mounted){
+        setState(() {
+          _isSaving = true;
+        });
+      }
 
       final fba.User? currentUser = fba.FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
@@ -263,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           CircleAvatar(
             radius: 60,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             backgroundImage: (imageUrl != null)
                 ? CachedNetworkImageProvider(imageUrl)
                 : null,
@@ -381,9 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: const Text('Set as Default'),
                   onTap: () {
                     Navigator.of(builderContext).pop();
-                    if (photo.id != null) {
-                      _setDefaultPhoto(photo.id!);
-                    }
+                    _setDefaultPhoto(photo.id);
                   },
                 ),
               ListTile(
@@ -391,9 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text('Delete Photo', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 onTap: () {
                   Navigator.of(builderContext).pop();
-                  if (photo.id != null) {
-                    _deletePhoto(photo.id!);
-                  }
+                  _deletePhoto(photo.id);
                 },
               ),
             ],

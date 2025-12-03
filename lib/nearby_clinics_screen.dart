@@ -3,18 +3,20 @@ import '../models/business_model.dart';
 import '../services/location_service.dart';
 import '../services/business_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:developer' as developer;
 
 class NearbyClinicsScreen extends StatefulWidget {
-  const NearbyClinicsScreen({Key? key}) : super(key: key);
+  const NearbyClinicsScreen({super.key});
 
   @override
-  _NearbyClinicsScreenState createState() => _NearbyClinicsScreenState();
+  State<NearbyClinicsScreen> createState() => _NearbyClinicsScreenState();
 }
 
 class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
   bool _isLoading = true;
   String? _error;
   List<Business> _businesses = [];
+  Position? _currentPosition;
 
   final LocationService _locationService = LocationService();
   final BusinessService _businessService = BusinessService();
@@ -28,34 +30,55 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
   Future<void> _fetchNearbyClinics() async {
     try {
       // 1. Get current location
-      final locationData = await _locationService.getCurrentLocation();
-      if (locationData == null) {
-        setState(() {
-          _error = 'Could not determine your location. Please ensure location services are enabled.';
-          _isLoading = false;
-        });
+      _currentPosition = await _locationService.getCurrentLocation();
+      if (_currentPosition == null) {
+        if (mounted) {
+          setState(() {
+            _error = 'Could not determine your location. Please ensure location services are enabled.';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
       // 2. Fetch nearby businesses from the backend
       final businesses = await _businessService.findNearbyBusinesses(
-        locationData.latitude!,
-        locationData.longitude!,
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
       );
+      
+      if (mounted) {
+        setState(() {
+          _businesses = businesses;
+          _isLoading = false;
+        });
+      }
 
-      setState(() {
-        _businesses = businesses;
-        _isLoading = false;
-      });
-
-    } catch (e) {
-      print('Error fetching nearby clinics: $e');
-      setState(() {
-        _error = 'Failed to find nearby clinics. Please try again later.';
-        _isLoading = false;
-      });
+    } catch (e, s) {
+      developer.log('Error fetching nearby clinics', error: e, stackTrace: s, name: 'com.example.myapp.nearby');
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to find nearby clinics. Please try again later.';
+          _isLoading = false;
+        });
+      }
     }
   }
+  
+  // Function to calculate the distance
+  String _getDistance(double lat, double lng) {
+    if (_currentPosition == null) return '';
+    final distance = Geolocator.distanceBetween(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      lat,
+      lng,
+    );
+    // Convert to miles
+    final distanceInMiles = distance * 0.000621371;
+    return '${distanceInMiles.toStringAsFixed(1)} miles';
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,12 +121,13 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
       itemCount: _businesses.length,
       itemBuilder: (context, index) {
         final business = _businesses[index];
+        final distance = _getDistance(business.location.latitude, business.location.longitude);
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ListTile(
             title: Text(business.name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(business.category),
-            trailing: const Icon(Icons.arrow_forward_ios),
+             trailing: Text(distance, style: const TextStyle(color: Colors.grey)),
             onTap: () {
               // TODO: Navigate to a business details screen
             },

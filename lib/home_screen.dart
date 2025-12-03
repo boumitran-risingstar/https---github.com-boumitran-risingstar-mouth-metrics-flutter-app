@@ -155,7 +155,7 @@ class HomeScreen extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               children: [
                 Image.network(
-                  'https://images.pexels.com/photos/1919236/pexels-photo-1919236.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                  'https://images.pexels.com/photos/5935791/pexels-photo-5935791.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
