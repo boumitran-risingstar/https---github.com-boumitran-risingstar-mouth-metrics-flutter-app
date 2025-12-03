@@ -10,6 +10,7 @@
     "express": "^4.19.2",
     "firebase-admin": "^11.0.0",
     "cors": "^2.8.5",
-    "geofire-common": "^5.2.0"
+    "geofire-common": "^5.2.0",
+    "@google-cloud/storage": "^6.9.5"
   }
 }

@@ -54,6 +54,10 @@
         "function": "profileHandler"
       },
       {
+        "source": "/business/**",
+        "function": "businessProfileRedirect"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
