@@ -83,51 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold,
                     ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Here is your health summary.',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-
-              // Health Metrics Grid
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildMetricCard(
-                    context,
-                    icon: Icons.favorite_border,
-                    label: 'Heart Rate',
-                    value: '78 bpm',
-                    color: Colors.red,
-                  ),
-                  _buildMetricCard(
-                    context,
-                    icon: Icons.local_fire_department_outlined,
-                    label: 'Calories',
-                    value: '1200 kcal',
-                    color: Colors.orange,
-                  ),
-                  _buildMetricCard(
-                    context,
-                    icon: Icons.directions_walk,
-                    label: 'Steps',
-                    value: '8,500',
-                    color: Colors.blue,
-                  ),
-                  _buildMetricCard(
-                    context,
-                    icon: Icons.nightlight_round,
-                    label: 'Sleep',
-                    value: '7h 30m',
-                    color: Colors.purple,
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
               // Daily Tip Card
@@ -176,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // Conditional "Find Specialists" Card
-              if (user.isBusinessOwner ?? false)
+              if (user.isBusinessOwner)
                 Card(
                   elevation: 2.0,
                   shape: RoundedRectangleBorder(
@@ -235,37 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(BuildContext context, {required IconData icon, required String label, required String value, required Color color}) {
-    return Card(
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
       ),
     );
   }
