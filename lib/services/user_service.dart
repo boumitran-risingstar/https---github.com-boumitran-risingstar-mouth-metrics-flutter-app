@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
+import 'package:mouth_metrics/models/user_model.dart';
 
 class UserService {
   // Dynamically set the base URL based on the environment
@@ -275,6 +276,31 @@ class UserService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to load profile for slug $slug: ${response.body}');
+    }
+  }
+
+  Future<List<UserModel>> findNearbyProfessionals() async {
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      throw Exception('Not authenticated');
+    }
+
+    final url = Uri.parse('$_serviceBaseUrl/api/professionals/nearby');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> professionalsJson = jsonDecode(response.body);
+      return professionalsJson
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Failed to find nearby professionals: ${response.body}');
     }
   }
 }

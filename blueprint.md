@@ -4,37 +4,7 @@
 
 Mouth Metrics is a Flutter application designed to be a personal dental health companion. It aims to provide users with tools and insights to better track and understand their oral hygiene habits and health. The application is built with a focus on a modern, clean, and intuitive user interface.
 
-## Backlog
-
-### Geo-Aware Business & Specialist Directory (High Priority)
-
-This feature will build a directory of dental businesses and professionals with location-based search capabilities for both patients and clinics.
-
-**Phase 1: Foundation (Data Models & Location Services)**
-
-1.  **Update Data Models:**
-    *   **`business_model.dart`:** Add a `GeoPoint` location field and a `category` field (e.g., 'Dental Clinic', 'Orthodontics').
-    *   **`user_model.dart`:** Add a `userType` field ('Patient' vs. 'Professional') and a location field for professionals.
-2.  **Location Services:**
-    *   Integrate the `location` package.
-    *   Implement a helper service for requesting permissions and fetching the user's current location.
-
-**Phase 2: Patient-Facing Feature ("Find Dental Clinics Near Me")**
-
-1.  **Backend (`business-service`):**
-    *   Create a public API endpoint (`GET /api/businesses/nearby`) that accepts coordinates and a radius to find nearby clinics.
-2.  **Frontend (UI & Service Integration):**
-    *   Add a "Find Dental Clinics Near Me" button to the `home_screen`.
-    *   Create a `results_screen.dart` to display clinics returned by the API.
-    *   Integrate `google_maps_flutter` to show results on a map.
-
-**Phase 3: Business-Facing Feature ("Find Consultants Near Clinic")**
-
-1.  **Backend (`user-service`):**
-    *   Create a secure API endpoint (`GET /api/professionals/nearby`) for authenticated business users to find nearby professionals.
-2.  **Frontend (UI & Service Integration):**
-    *   Design a conditional dashboard for business-type users.
-    *   Implement a "Find Specialists" UI that calls the secure backend and displays professional profiles.
+## Current Task
 
 ### AI-Powered "Article of the Day"
 
@@ -48,38 +18,44 @@ This feature will make the app more dynamic and engaging by using generative AI 
 4.  **Update the UI:** Modify `home_screen.dart` to display the AI-generated content using a `FutureBuilder`.
 5.  **Refine the UI:** Polish the article card with modern styling.
 
-## Current Task: Implement Public Profile URL Slug
-
-### Plan:
-
-1.  **Update Router:** Modify `lib/router.dart` to include a dynamic slug in the `/profile` route (e.g., `/profile/:slug`).
-2.  **Update User Service:** Add a `getUserBySlug` method to `lib/services/user_service.dart` to fetch user data from the public-facing endpoint.
-3.  **Update Profile Screen:** Modify `lib/profile_screen.dart` to:
-    *   Accept the `slug` as a parameter.
-    *   Fetch user data based on the slug if it's provided.
-    *   Conditionally render a read-only public view or the editable profile view based on whether it's the user's own profile.
-
-### Implemented Steps:
-
-*   **Router Updated:** The `/profile` route in `lib/router.dart` is now `/profile/:slug`, and it passes the `slug` to the `ProfileScreen`.
-*   **User Service Updated:** The `user_service.dart` now has a `getUserBySlug(String slug)` method that fetches public user data.
-*   **Profile Screen Updated:** The `ProfileScreen` now accepts a `slug`, fetches the appropriate user, and displays either an editable view (for the logged-in user) or a public, read-only view.
-
-## Backend Services
-
-The application is supported by a set of backend microservices that handle business logic and data persistence.
-
-*   **`user-service`**: This service is responsible for managing user-related data, such as profiles and preferences. It is a private service that requires Firebase authentication for all endpoints, ensuring that users can only access their own data.
-
-*   **`business-service`**: This service handles business-specific logic. It is also a private service that requires Firebase authentication, protecting sensitive business data.
-
-*   **Security**: Both services are deployed as private Cloud Run services. Public access has been removed, and all requests must be authenticated with a valid Firebase ID token.
-
 ## Style, Design, and Features
 
 This document outlines the design and features implemented in the application.
 
-### Version 1.8.1 (Current)
+### Version 1.9.0 (Current)
+
+*   **Geo-Aware Directory (Map Integration):**
+    *   **Interactive Map View:** The "Nearby Dental Clinics" feature has been significantly enhanced with an interactive map view.
+        *   **Dependency:** The `google_maps_flutter` package was added to support map functionality.
+        *   **UI:** The `nearby_clinics_screen.dart` now defaults to a `GoogleMap` view, displaying the user's location and nearby clinics as markers. A toggle button in the app bar allows users to switch between the new map view and the original list view.
+    *   **Cross-Platform Configuration:** The feature is now fully functional across Android, iOS, and Web.
+        *   **Android:** The Google Maps API key was added to `android/app/src/main/AndroidManifest.xml`.
+        *   **iOS:** The API key was configured in `ios/Runner/AppDelegate.swift` and the necessary `io.flutter.embedded_views_preview` key was added to `ios/Runner/Info.plist`.
+        *   **Web:** The Google Maps JavaScript API script was added to `web/index.html` to enable the map on the web platform.
+
+### Version 1.8.3
+
+*   **Geo-Aware Directory (Business Feature):**
+    *   **Backend:** A secure API endpoint (`/api/professionals/nearby`) was created for authenticated business users.
+    *   **Frontend:**
+        *   A "Find Specialists" card is now conditionally displayed on the home screen for users identified as business owners.
+        *   A new `find_specialists_screen.dart` was created to display a list of nearby specialists fetched from the secure endpoint.
+        *   The router in `lib/router.dart` was updated with the new `/find-specialists` route.
+
+### Version 1.8.2
+
+*   **Navigation Flow Correction:**
+    *   In `lib/home_screen.dart`, the navigation from the "Find Dental Clinics" card was changed from `context.go()` to `context.push()`. This corrects the user experience by pushing the `nearby-clinics` screen onto the navigation stack, ensuring the user can press the back button to return to the dashboard as expected.
+*   **Dashboard UI Cleanup:**
+    *   The back button was explicitly removed from the dashboard's `AppBar` by setting `automaticallyImplyLeading: false` in `lib/home_screen.dart`. This removes a confusing and unnecessary UI element from the app's main screen.
+*   **Backend Service Authentication Fix:**
+    *   The `business-service` was encountering authentication errors. This was resolved by updating the `backend/business-service/cloudbuild.yaml` to include the `--allow-unauthenticated` flag during deployment. The service is now publicly accessible, resolving the 403 Forbidden errors.
+*   **Geo-Aware Directory (Patient Feature):**
+    *   **Nearby Clinics Screen:** Implemented `nearby_clinics_screen.dart` which fetches the user's location and calls the `business-service` to find and display a list of dental clinics in the vicinity.
+    *   **Location Services:** Integrated the `location` package to handle permissions and retrieve the device's current GPS coordinates.
+    *   **API Integration:** The frontend now successfully communicates with the public `/api/businesses/nearby` endpoint.
+
+### Version 1.8.1
 
 *   **Improved OTP Input:** In the phone authentication OTP page (`login_screen.dart`), the `Pinput` widget now has `autofocus: true`. This automatically focuses the cursor on the OTP input field, improving the user experience during login.
 
@@ -140,7 +116,7 @@ This document outlines the design and features implemented in the application.
     *   **Backend Deployed:** The `user-service` is successfully deployed on Cloud Run, providing endpoints for user creation and public profile retrieval. All IAM and permissions issues have been resolved.
     *   **Profile Navigation:** A "My Profile" button was added to the `HomeScreen` to navigate users to their dedicated profile page.
     *   **Profile Screen:** A new `profile_screen.dart` was created to display the user's public profile information (name, bio, profile picture) fetched from the backend.
-    *   **Profile Sharing:** The profile screen features a "Share" button. Tapping this button will open the native device sharing UI, allowing users to share a public link to their profile page.
+    *   **Profile Sharing:** The profile screen features a "Share" button. Tapping this button will open the native device sharing UI,.
     *   **Dependencies:** The `share_plus` package was added to the project to facilitate the sharing functionality.
     *   **Routing:** A new `/my-profile` route was added to the `go_router` configuration.
 

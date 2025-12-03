@@ -1,11 +1,13 @@
 
 const express = require('express');
-const { Firestore, Timestamp } = require('@google-cloud/firestore');
+const { Firestore, Timestamp, FieldValue } = require('@google-cloud/firestore');
 const { Storage } = require('@google-cloud/storage');
 const admin = require('firebase-admin');
 const cors = require('cors');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const geofire = require('geofire-common');
+
 
 const app = express();
 app.use(cors());
@@ -17,6 +19,7 @@ admin.initializeApp();
 const firestore = new Firestore({ ignoreUndefinedProperties: true });
 const storage = new Storage();
 const usersCollection = firestore.collection('users');
+const businessesCollection = firestore.collection('businesses');
 const slugsCollection = firestore.collection('slugs');
 const profilesBucketName = 'user-profile-pages'; // Replace with your bucket name
 const profilesBucket = storage.bucket(profilesBucketName);
@@ -52,6 +55,26 @@ const authenticate = async (req, res, next) => {
         return res.status(403).send('Forbidden');
     }
 };
+
+// --- Authorization Middleware for Business Owners ---
+const authorizeBusinessOwner = async (req, res, next) => {
+    try {
+        const { uid } = req.user; // Comes from `authenticate` middleware
+        const businessQuery = await businessesCollection.where('ownerId', '==', uid).limit(1).get();
+
+        if (businessQuery.empty) {
+            return res.status(403).send('Forbidden: User is not a business owner.');
+        }
+
+        // Attach the business to the request object for later use
+        req.business = { id: businessQuery.docs[0].id, ...businessQuery.docs[0].data() };
+        next();
+    } catch (error) {
+        console.error('Error authorizing business owner:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
 
 // --- Helper Functions ---
 
@@ -128,31 +151,53 @@ const createAndUploadRedirectPage = async (oldSlug, newSlug) => {
 
 // --- API Routes ---
 const userRouter = express.Router();
+const professionalsRouter = express.Router(); // New router for professionals
+
 
 // Sync User
 userRouter.post('/sync', authenticate, async (req, res) => {
     try {
         const { uid, email, phone_number, name: firebaseName, picture } = req.user;
-        const displayName = req.body.displayName || firebaseName;
+        const { displayName, userType = 'Patient', location } = req.body;
+        const finalName = displayName || firebaseName;
         const userRef = usersCollection.doc(uid);
         const userDoc = await userRef.get();
 
+        // Check if the user is a business owner
+        const businessQuery = await businessesCollection.where('ownerId', '==', uid).limit(1).get();
+        const isBusinessOwner = !businessQuery.empty;
+
         if (userDoc.exists) {
-            return res.status(200).send({ id: userDoc.id, ...userDoc.data() });
+            const userData = userDoc.data();
+            // If the business owner status has changed, update it
+            if (userData.isBusinessOwner !== isBusinessOwner) {
+                await userRef.update({ isBusinessOwner });
+            }
+            return res.status(200).send({ id: userDoc.id, ...userData, isBusinessOwner });
         }
 
-        const slug = await generateUniqueSlug(displayName || 'user');
+        const slug = await generateUniqueSlug(finalName || 'user');
         const newUser = {
-            name: displayName || 'New User',
+            name: finalName || 'New User',
             email: email,
             phoneNumber: phone_number,
+            userType: userType,
+            isBusinessOwner: isBusinessOwner, // Add the flag here
             slug: slug,
             bio: 'Welcome to my profile!',
             profilePictureUrl: picture || null,
-            photoGallery: [], // Initialize with an empty gallery
+            photoGallery: [],
             createdAt: Timestamp.now(),
             slugHistory: [],
         };
+
+        // Add location and geohash if user is a Professional
+        if (userType === 'Professional' && location) {
+            if (location.latitude && location.longitude) {
+                newUser.location = new Firestore.GeoPoint(location.latitude, location.longitude);
+                newUser.geohash = geofire.geohashForLocation([location.latitude, location.longitude]);
+            }
+        }
 
         await firestore.runTransaction(async (t) => {
             t.set(userRef, newUser);
@@ -185,7 +230,7 @@ userRouter.put('/:userId', authenticate, async (req, res) => {
     if (req.user.uid !== userId) return res.status(403).send('Forbidden');
 
     try {
-        const { name, bio, email } = req.body;
+        const { name, bio, email, location, userType } = req.body;
         const userRef = usersCollection.doc(userId);
         const userDoc = await userRef.get();
         if (!userDoc.exists) return res.status(404).send('User not found');
@@ -195,35 +240,44 @@ userRouter.put('/:userId', authenticate, async (req, res) => {
         let newSlug = null, oldSlug = currentData.slug;
         let needsPageUpdate = false;
 
-        if (email) {
-            updatedData.email = email;
-        }
-        if (bio && bio !== currentData.bio) {
-            updatedData.bio = bio;
-            needsPageUpdate = true;
-        }
+        const payload = {
+            bio: bio !== undefined ? bio : currentData.bio,
+            email: email !== undefined ? email : currentData.email,
+            userType: userType !== undefined ? userType : currentData.userType
+        };
+
         if (name && name !== currentData.name) {
-            updatedData.name = name;
+            payload.name = name;
             newSlug = await generateUniqueSlug(name);
-            updatedData.slug = newSlug;
-            updatedData.slugHistory = [oldSlug, ...(currentData.slugHistory || [])];
+            payload.slug = newSlug;
+            payload.slugHistory = [oldSlug, ...(currentData.slugHistory || [])];
             needsPageUpdate = true;
-        } else {
-            updatedData.slug = currentData.slug;
         }
 
+        // Handle location update
+        if (payload.userType === 'Professional' && location) {
+            if (location.latitude && location.longitude) {
+                payload.location = new Firestore.GeoPoint(location.latitude, location.longitude);
+                payload.geohash = geofire.geohashForLocation([location.latitude, location.longitude]);
+            }
+        } else {
+             // If user is no longer a professional, remove location data
+            payload.location = FieldValue.delete();
+            payload.geohash = FieldValue.delete();
+        }
+
+        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
         await firestore.runTransaction(async (t) => {
-            const payload = { name: updatedData.name, bio: updatedData.bio, email: updatedData.email, slug: updatedData.slug, slugHistory: updatedData.slugHistory };
-            Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
             t.update(userRef, payload);
             if (newSlug) {
                 t.set(slugsCollection.doc(newSlug), { userId });
+                Object.assign(updatedData, payload); 
             }
         });
 
         if (needsPageUpdate) {
-            await generateAndUploadProfilePage(updatedData);
+            await generateAndUploadProfilePage({ ...currentData, ...payload, uid: userId});
         }
         if (newSlug) {
             await createAndUploadRedirectPage(oldSlug, newSlug);
@@ -235,6 +289,7 @@ userRouter.put('/:userId', authenticate, async (req, res) => {
         res.status(500).send('Error updating profile');
     }
 });
+
 
 // --- Photo Management Endpoints ---
 
@@ -378,6 +433,65 @@ userRouter.delete('/:userId/photos/:photoId', authenticate, async (req, res) => 
 });
 
 
+// --- Professionals Endpoints ---
+
+// Find nearby professionals (for business owners)
+professionalsRouter.get('/nearby', [authenticate, authorizeBusinessOwner], async (req, res) => {
+    try {
+        const { location } = req.business; // Business location from middleware
+        if (!location || !location.latitude || !location.longitude) {
+            return res.status(400).send('Business location is not set.');
+        }
+
+        const center = [location.latitude, location.longitude];
+        const radiusInM = 50 * 1000; // 50 kilometers
+
+        // Get the bounding box for the query
+        const bounds = geofire.geohashQueryBounds(center, radiusInM);
+        const promises = [];
+
+        // Construct a query for each bound
+        for (const b of bounds) {
+            const q = usersCollection
+                .where('userType', '==', 'Professional')
+                .orderBy('geohash')
+                .startAt(b[0])
+                .endAt(b[1]);
+            promises.push(q.get());
+        }
+
+        // Await all queries and process the results
+        const snapshots = await Promise.all(promises);
+        const matchingDocs = [];
+
+        for (const snap of snapshots) {
+            for (const doc of snap.docs) {
+                const docData = doc.data();
+                const docLocation = docData.location;
+
+                if (docLocation && docLocation.latitude && docLocation.longitude) {
+                    const distanceInKm = geofire.distanceBetween(
+                        [docLocation.latitude, docLocation.longitude],
+                        center
+                    );
+                    if (distanceInKm * 1000 <= radiusInM) {
+                        matchingDocs.push({ id: doc.id, ...docData, distance: distanceInKm.toFixed(2) });
+                    }
+                }
+            }
+        }
+
+        // Sort results by distance
+        matchingDocs.sort((a, b) => a.distance - b.distance);
+
+        res.status(200).send(matchingDocs);
+    } catch (error) {
+        console.error('Error finding nearby professionals:', error);
+        res.status(500).send('Error finding nearby professionals');
+    }
+});
+
+
 // --- Public Photo Proxy (No Auth) ---
 app.get('/photos/:userId/:photoId', (req, res) => {
     const { userId, photoId } = req.params;
@@ -417,6 +531,8 @@ app.get('/profile/:slug', async (req, res) => {
 
 // Main app configuration
 app.use('/api/users', userRouter);
+app.use('/api/professionals', professionalsRouter); // Register the new router
+
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {

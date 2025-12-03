@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/business_model.dart';
 import '../services/location_service.dart';
 import '../services/business_service.dart';
@@ -17,9 +20,12 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
   String? _error;
   List<Business> _businesses = [];
   Position? _currentPosition;
+  bool _isMapView = true; // Default to map view
 
   final LocationService _locationService = LocationService();
   final BusinessService _businessService = BusinessService();
+  final Completer<GoogleMapController> _controller = Completer();
+  final Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -29,7 +35,6 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
 
   Future<void> _fetchNearbyClinics() async {
     try {
-      // 1. Get current location
       _currentPosition = await _locationService.getCurrentLocation();
       if (_currentPosition == null) {
         if (mounted) {
@@ -41,7 +46,6 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
         return;
       }
 
-      // 2. Fetch nearby businesses from the backend
       final businesses = await _businessService.findNearbyBusinesses(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
@@ -51,6 +55,7 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
         setState(() {
           _businesses = businesses;
           _isLoading = false;
+          _updateMarkers();
         });
       }
 
@@ -64,8 +69,28 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
       }
     }
   }
-  
-  // Function to calculate the distance
+
+  void _updateMarkers() {
+    if (!mounted) return;
+    final markers = <Marker>{};
+    for (final business in _businesses) {
+      markers.add(
+        Marker(
+          markerId: MarkerId(business.id),
+          position: LatLng(business.location.latitude, business.location.longitude),
+          infoWindow: InfoWindow(
+            title: business.name,
+            snippet: business.category,
+          ),
+        ),
+      );
+    }
+    setState(() {
+      _markers.clear();
+      _markers.addAll(markers);
+    });
+  }
+
   String _getDistance(double lat, double lng) {
     if (_currentPosition == null) return '';
     final distance = Geolocator.distanceBetween(
@@ -74,17 +99,26 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
       lat,
       lng,
     );
-    // Convert to miles
     final distanceInMiles = distance * 0.000621371;
     return '${distanceInMiles.toStringAsFixed(1)} miles';
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nearby Dental Clinics'),
+        actions: [
+          IconButton(
+            icon: Icon(_isMapView ? Icons.list : Icons.map),
+            onPressed: () {
+              setState(() {
+                _isMapView = !_isMapView;
+              });
+            },
+            tooltip: _isMapView ? 'List View' : 'Map View',
+          ),
+        ],
       ),
       body: _buildBody(),
     );
@@ -117,6 +151,30 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
       );
     }
 
+    return _isMapView ? _buildMapView() : _buildListView();
+  }
+
+  Widget _buildMapView() {
+    return GoogleMap(
+      mapType: MapType.normal,
+      initialCameraPosition: CameraPosition(
+        target: _currentPosition != null 
+            ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude) 
+            : const LatLng(37.7749, -122.4194), // Default to SF
+        zoom: 12,
+      ),
+      onMapCreated: (GoogleMapController controller) {
+        if (!_controller.isCompleted) {
+          _controller.complete(controller);
+        }
+      },
+      markers: _markers,
+      myLocationEnabled: true,
+      myLocationButtonEnabled: true,
+    );
+  }
+
+  Widget _buildListView() {
     return ListView.builder(
       itemCount: _businesses.length,
       itemBuilder: (context, index) {
@@ -127,7 +185,7 @@ class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
           child: ListTile(
             title: Text(business.name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(business.category),
-             trailing: Text(distance, style: const TextStyle(color: Colors.grey)),
+            trailing: Text(distance, style: const TextStyle(color: Colors.grey)),
             onTap: () {
               // TODO: Navigate to a business details screen
             },

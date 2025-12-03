@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:mouth_metrics/find_specialists_screen.dart';
 import 'package:mouth_metrics/home_screen.dart';
 import 'package:mouth_metrics/landing_page.dart';
 import 'package:mouth_metrics/login_screen.dart';
@@ -42,6 +43,12 @@ final GoRouter router = GoRouter(
           path: 'nearby-clinics',
           builder: (context, state) {
             return const NearbyClinicsScreen();
+          },
+        ),
+        GoRoute(
+          path: 'find-specialists',
+          builder: (context, state) {
+            return const FindSpecialistsScreen();
           },
         ),
       ],
