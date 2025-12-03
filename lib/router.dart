@@ -5,6 +5,7 @@ import 'package:mouth_metrics/find_specialists_screen.dart';
 import 'package:mouth_metrics/home_screen.dart';
 import 'package:mouth_metrics/landing_page.dart';
 import 'package:mouth_metrics/login_screen.dart';
+import 'package:mouth_metrics/my_businesses_screen.dart';
 import 'package:mouth_metrics/profile_screen.dart';
 import 'package:mouth_metrics/nearby_clinics_screen.dart';
 
@@ -56,7 +57,14 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'business-profile',
           builder: (context, state) {
-            return const BusinessProfileScreen();
+            final businessId = state.uri.queryParameters['businessId'];
+            return BusinessProfileScreen(businessId: businessId);
+          },
+        ),
+        GoRoute(
+          path: 'my-businesses',
+          builder: (context, state) {
+            return const MyBusinessesScreen();
           },
         ),
       ],

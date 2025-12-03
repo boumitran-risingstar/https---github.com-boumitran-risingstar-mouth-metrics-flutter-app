@@ -85,4 +85,69 @@ class BusinessService {
       throw Exception('Failed to load nearby businesses');
     }
   }
+
+  // Get all businesses for the current user
+  Future<List<Business>> getMyBusinesses() async {
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final uri = Uri.parse('$_baseUrl/api/businesses/my-businesses');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Business.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load my businesses');
+    }
+  }
+
+  // Get a single business by ID
+  Future<Business> getBusinessById(String businessId) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final uri = Uri.parse('$_baseUrl/api/businesses/$businessId');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Business.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load business');
+    }
+  }
+
+  // Delete a business
+  Future<void> deleteBusiness(String businessId) async {
+    final idToken = await _getIdToken();
+    if (idToken == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final uri = Uri.parse('$_baseUrl/api/businesses/$businessId');
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete business');
+    }
+  }
 }

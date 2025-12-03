@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Business {
-  final String id;
+  final String? id;
   final String name;
   final String description;
   final String image;
@@ -9,10 +9,11 @@ class Business {
   final GeoPoint location;
   final String category;
   final String ownerId;
+  final String? slug;
   final String geohash;
 
   Business({
-    required this.id,
+    this.id,
     required this.name,
     required this.description,
     required this.image,
@@ -20,6 +21,7 @@ class Business {
     required this.location,
     required this.category,
     required this.ownerId,
+    this.slug,
     required this.geohash,
   });
 
@@ -33,6 +35,7 @@ class Business {
       location: data['location'] ?? const GeoPoint(0, 0),
       category: data['category'] ?? '',
       ownerId: data['ownerId'] ?? '',
+      slug: data['slug'] ?? '',
       geohash: data['geohash'] ?? '',
     );
   }
@@ -45,7 +48,7 @@ class Business {
     );
 
     return Business(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       name: json['name'] as String,
       description: json['description'] as String,
       image: json['image'] as String,
@@ -53,12 +56,14 @@ class Business {
       location: geoPoint,
       category: json['category'] as String,
       ownerId: json['ownerId'] as String,
+      slug: json['slug'] as String?,
       geohash: json['geohash'] as String,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
+      if (id != null) 'id': id,
       'name': name,
       'description': description,
       'image': image,
@@ -69,6 +74,7 @@ class Business {
       },
       'category': category,
       'ownerId': ownerId,
+      if (slug != null) 'slug': slug,
       'geohash': geohash,
     };
   }

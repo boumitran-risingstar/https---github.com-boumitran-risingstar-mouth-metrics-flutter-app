@@ -35,75 +35,107 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        automaticallyImplyLeading: false, // This will remove the back button
-        actions: [
-          IconButton(
-            icon: Icon(
-              themeProvider.themeMode == ThemeMode.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
+    return FutureBuilder<app_user.User?>(
+      future: _userFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError || !snapshot.hasData) {
+          return Scaffold(
+            body: Center(child: Text('Error: ${snapshot.error ?? "User not found."}')),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _signOut(context),
+              child: const Icon(Icons.logout),
+              tooltip: 'Logout',
             ),
-            onPressed: () => themeProvider.toggleTheme(),
-            tooltip: 'Toggle Theme',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'profile':
-                  context.push('/profile');
-                  break;
-                case 'business_profile':
-                  context.push('/business-profile');
-                  break;
-                case 'logout':
-                  _signOut(context);
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'profile',
-                child: ListTile(
-                  leading: Icon(Icons.person_outline),
-                  title: Text('My Profile'),
+          );
+        }
+
+        final user = snapshot.data!;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Dashboard'),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  themeProvider.themeMode == ThemeMode.dark
+                      ? Icons.light_mode
+                      : Icons.dark_mode,
                 ),
+                onPressed: () => themeProvider.toggleTheme(),
+                tooltip: 'Toggle Theme',
               ),
-              const PopupMenuItem<String>(
-                value: 'business_profile',
-                child: ListTile(
-                  leading: Icon(Icons.business_center_outlined),
-                  title: Text('Business Profile'),
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Logout'),
-                ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  switch (value) {
+                    case 'profile':
+                      context.push('/profile');
+                      break;
+                    case 'my_businesses':
+                      context.push('/my-businesses');
+                      break;
+                    case 'business_profile':
+                      context.push('/business-profile');
+                      break;
+                    case 'logout':
+                      _signOut(context);
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  final menuItems = <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'profile',
+                      child: ListTile(
+                        leading: Icon(Icons.person_outline),
+                        title: Text('My Profile'),
+                      ),
+                    ),
+                  ];
+
+                  if (user.isBusinessOwner) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: 'my_businesses',
+                        child: ListTile(
+                          leading: Icon(Icons.store_mall_directory_outlined),
+                          title: Text('My Businesses'),
+                        ),
+                      ),
+                    );
+                  }
+
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: 'business_profile',
+                      child: ListTile(
+                        leading: Icon(Icons.business_center_outlined),
+                        title: Text('Business Profile'),
+                      ),
+                    ),
+                  );
+
+                  menuItems.addAll([
+                    const PopupMenuDivider(),
+                    const PopupMenuItem<String>(
+                      value: 'logout',
+                      child: ListTile(
+                        leading: Icon(Icons.logout),
+                        title: Text('Logout'),
+                      ),
+                    ),
+                  ]);
+
+                  return menuItems;
+                },
               ),
             ],
           ),
-        ],
-      ),
-      body: FutureBuilder<app_user.User?>(
-        future: _userFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text('User not found.'));
-          }
-
-          final user = snapshot.data!;
-
-          return ListView(
+          body: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
               // Welcome Header
@@ -218,9 +250,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,28 +1,24 @@
+
 import 'package:flutter/material.dart';
-import 'package:mouth_metrics/services/user_service.dart';
-import 'package:mouth_metrics/models/user_model.dart';
+import 'package:mouth_metrics/models/business_model.dart';
+import 'package:mouth_metrics/services/business_service.dart';
 
 class FindSpecialistsScreen extends StatefulWidget {
-  const FindSpecialistsScreen({Key? key}) : super(key: key);
+  const FindSpecialistsScreen({super.key});
 
   @override
   State<FindSpecialistsScreen> createState() => _FindSpecialistsScreenState();
 }
 
 class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
-  final UserService _userService = UserService();
-  Future<List<User>>? _nearbySpecialists;
+  final BusinessService _businessService = BusinessService();
+  Future<List<Business>>? _specialistsFuture;
 
   @override
   void initState() {
     super.initState();
-    _fetchNearbySpecialists();
-  }
-
-  void _fetchNearbySpecialists() {
-    setState(() {
-      _nearbySpecialists = _userService.findNearbyProfessionals();
-    });
+    // TODO: Replace with actual user location
+    _specialistsFuture = _businessService.findNearbyBusinesses(0, 0); 
   }
 
   @override
@@ -31,15 +27,15 @@ class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
       appBar: AppBar(
         title: const Text('Find Specialists'),
       ),
-      body: FutureBuilder<List<User>>(
-        future: _nearbySpecialists,
+      body: FutureBuilder<List<Business>>(
+        future: _specialistsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No specialists found nearby.'));
+            return const Center(child: Text('No specialists found near you.'));
           }
 
           final specialists = snapshot.data!;
@@ -49,19 +45,13 @@ class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
             itemBuilder: (context, index) {
               final specialist = specialists[index];
               return Card(
-                margin: const EdgeInsets.all(8.0),
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: specialist.profilePictureUrl != null
-                        ? NetworkImage(specialist.profilePictureUrl!)
-                        : null,
-                    child: specialist.profilePictureUrl == null
-                        ? const Icon(Icons.person)
-                        : null,
-                  ),
-                  title: Text(specialist.name!),
-                  subtitle: Text(specialist.userType),
-                  trailing: const Text(''),
+                  title: Text(specialist.name),
+                  subtitle: Text(specialist.category),
+                  onTap: () {
+                    // TODO: Handle specialist tap, maybe navigate to a detail screen
+                  },
                 ),
               );
             },
