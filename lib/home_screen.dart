@@ -128,6 +128,22 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
+          // Find Clinics Card
+          Card(
+            elevation: 2.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.location_on_outlined),
+              title: const Text('Find Dental Clinics'),
+              subtitle: const Text('Search for clinics near you'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () => context.go('/nearby-clinics'),
+            ),
+          ),
+          const SizedBox(height: 24),
+
           // Article of the Day Card
           Card(
             clipBehavior: Clip.antiAlias,

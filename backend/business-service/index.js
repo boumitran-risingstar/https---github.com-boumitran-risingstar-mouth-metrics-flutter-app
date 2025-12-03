@@ -1,6 +1,7 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
+const geofire = require('geofire-common');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -14,6 +15,7 @@ app.options('*', cors()); // Enable pre-flight for all routes
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
+const db = admin.firestore();
 
 // Middleware to verify Firebase ID token
 const authenticate = async (req, res, next) => {
@@ -41,6 +43,57 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Business management service is running');
 });
+
+// Public endpoint to find nearby businesses
+app.get('/api/businesses/nearby', async (req, res) => {
+    const { lat, lng, radius } = req.query;
+
+    if (!lat || !lng || !radius) {
+        return res.status(400).send('Missing required query parameters: lat, lng, radius');
+    }
+
+    const center = [parseFloat(lat), parseFloat(lng)];
+    const radiusInM = parseFloat(radius) * 1000; // Convert radius from km to meters
+
+    // Get hash bounds
+    const bounds = geofire.geohashQueryBounds(center, radiusInM);
+    const promises = [];
+
+    for (const b of bounds) {
+        const q = db.collection('businesses')
+            .orderBy('geohash')
+            .startAt(b[0])
+            .endAt(b[1]);
+        promises.push(q.get());
+    }
+
+    try {
+        const snapshots = await Promise.all(promises);
+        const matchingDocs = [];
+
+        for (const snap of snapshots) {
+            for (const doc of snap.docs) {
+                const docData = doc.data();
+                const lat = docData.location.latitude;
+                const lng = docData.location.longitude;
+
+                // We have to filter out a few false positives due to GeoHash
+                // accuracy, but most will be accurate
+                const distanceInKm = geofire.distanceBetween([lat, lng], center);
+                const distanceInM = distanceInKm * 1000;
+                if (distanceInM <= radiusInM) {
+                    matchingDocs.push({ id: doc.id, ...docData });
+                }
+            }
+        }
+
+        res.status(200).send(matchingDocs);
+    } catch (error) {
+        console.error('Error during nearby search:', error);
+        res.status(500).send('Error searching for nearby businesses.');
+    }
+});
+
 
 // Example authenticated route
 app.get('/businesses', authenticate, (req, res) => {

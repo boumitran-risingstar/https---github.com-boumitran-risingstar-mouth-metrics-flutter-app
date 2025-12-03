@@ -62,6 +62,8 @@ class User {
   final String? profilePictureUrl;
   final DateTime? createdAt;
   final List<Photo> photoGallery; // New field for the photo gallery
+  final String userType; // New field
+  final GeoPoint? location; // New field
 
   User({
     required this.id,
@@ -73,6 +75,8 @@ class User {
     this.profilePictureUrl,
     this.createdAt,
     this.photoGallery = const [], // Default to an empty list
+    this.userType = 'Patient', // Default to 'Patient'
+    this.location,
   });
 
   // Factory constructor to create a User from a Firestore document
@@ -90,6 +94,8 @@ class User {
               ?.map((photoJson) => Photo.fromJson(photoJson as Map<String, dynamic>))
               .toList() ??
           const [],
+      userType: data['userType'] as String? ?? 'Patient',
+      location: data['location'] as GeoPoint?,
     );
   }
 
@@ -115,6 +121,18 @@ class User {
             .toList() ??
         const [];
 
+    // Parse location
+    GeoPoint? location;
+    if (json['location'] is Map) {
+      final locMap = json['location'] as Map<String, dynamic>;
+      if (locMap.containsKey('_latitude') && locMap.containsKey('_longitude')) {
+          location = GeoPoint(locMap['_latitude'], locMap['_longitude']);
+      }
+    } else if (json['location'] is GeoPoint) {
+        location = json['location'];
+    }
+
+
     return User(
       id: json['id'] as String,
       name: json['name'] as String?,
@@ -125,6 +143,8 @@ class User {
       profilePictureUrl: json['profilePictureUrl'] as String?,
       createdAt: createdAt,
       photoGallery: gallery,
+      userType: json['userType'] as String? ?? 'Patient',
+      location: location,
     );
   }
 
@@ -139,6 +159,8 @@ class User {
       if (profilePictureUrl != null) 'profilePictureUrl': profilePictureUrl,
       if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
       'photoGallery': photoGallery.map((p) => p.toJson()).toList(),
+      'userType': userType,
+      if (location != null) 'location': location,
     };
   }
 
@@ -154,6 +176,11 @@ class User {
       'profilePictureUrl': profilePictureUrl,
       'createdAt': createdAt?.toIso8601String(),
       'photoGallery': photoGallery.map((p) => p.toJson()).toList(),
+      'userType': userType,
+      if (location != null) 'location': {
+          '_latitude': location!.latitude,
+          '_longitude': location!.longitude,
+      },
     };
   }
 }
