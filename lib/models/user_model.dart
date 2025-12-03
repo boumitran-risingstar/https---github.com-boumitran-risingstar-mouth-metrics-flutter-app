@@ -79,6 +79,8 @@ class User {
     this.location,
   });
 
+  bool get isBusinessOwner => userType == 'Business' || userType == 'Professional';
+
   // Factory constructor to create a User from a Firestore document
   factory User.fromFirestore(Map<String, dynamic> data, String documentId) {
     return User(

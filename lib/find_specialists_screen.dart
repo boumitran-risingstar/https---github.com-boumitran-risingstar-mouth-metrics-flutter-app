@@ -11,7 +11,7 @@ class FindSpecialistsScreen extends StatefulWidget {
 
 class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
   final UserService _userService = UserService();
-  Future<List<UserModel>>? _nearbySpecialists;
+  Future<List<User>>? _nearbySpecialists;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
       appBar: AppBar(
         title: const Text('Find Specialists'),
       ),
-      body: FutureBuilder<List<UserModel>>(
+      body: FutureBuilder<List<User>>(
         future: _nearbySpecialists,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -59,9 +59,9 @@ class _FindSpecialistsScreenState extends State<FindSpecialistsScreen> {
                         ? const Icon(Icons.person)
                         : null,
                   ),
-                  title: Text(specialist.name),
-                  subtitle: Text(specialist.specialty ?? 'Professional'),
-                  trailing: Text('${specialist.distance} km'),
+                  title: Text(specialist.name!),
+                  subtitle: Text(specialist.userType),
+                  trailing: const Text(''),
                 ),
               );
             },

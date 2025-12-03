@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mouth_metrics/models/user_model.dart' as app_user;
-import 'package:mouth_metrics/models/user_model.dart';
 
 class UserService {
   // Dynamically set the base URL based on the environment
@@ -279,7 +278,7 @@ class UserService {
     }
   }
 
-  Future<List<UserModel>> findNearbyProfessionals() async {
+  Future<List<app_user.User>> findNearbyProfessionals() async {
     final idToken = await _getIdToken();
     if (idToken == null) {
       throw Exception('Not authenticated');
@@ -297,7 +296,7 @@ class UserService {
     if (response.statusCode == 200) {
       final List<dynamic> professionalsJson = jsonDecode(response.body);
       return professionalsJson
-          .map((json) => UserModel.fromJson(json))
+          .map((json) => app_user.User.fromJson(json))
           .toList();
     } else {
       throw Exception('Failed to find nearby professionals: ${response.body}');
