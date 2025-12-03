@@ -8,10 +8,12 @@ import 'package:mouth_metrics/firebase_options.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mouth_metrics/router.dart';
+import 'package:mouth_metrics/app_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await activateAppCheck();
 
   if (kDebugMode) {
     try {
