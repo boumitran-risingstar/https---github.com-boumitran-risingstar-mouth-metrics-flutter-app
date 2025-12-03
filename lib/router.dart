@@ -1,4 +1,6 @@
+
 import 'package:go_router/go_router.dart';
+import 'package:mouth_metrics/business_profile_screen.dart';
 import 'package:mouth_metrics/find_specialists_screen.dart';
 import 'package:mouth_metrics/home_screen.dart';
 import 'package:mouth_metrics/landing_page.dart';
@@ -49,6 +51,12 @@ final GoRouter router = GoRouter(
           path: 'find-specialists',
           builder: (context, state) {
             return const FindSpecialistsScreen();
+          },
+        ),
+        GoRoute(
+          path: 'business-profile',
+          builder: (context, state) {
+            return const BusinessProfileScreen();
           },
         ),
       ],

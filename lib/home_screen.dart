@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -48,15 +49,44 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => themeProvider.toggleTheme(),
             tooltip: 'Toggle Theme',
           ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.push('/profile'),
-            tooltip: 'Profile Settings',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _signOut(context),
-            tooltip: 'Logout',
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  context.push('/profile');
+                  break;
+                case 'business_profile':
+                  context.push('/business-profile');
+                  break;
+                case 'logout':
+                  _signOut(context);
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'profile',
+                child: ListTile(
+                  leading: Icon(Icons.person_outline),
+                  title: Text('My Profile'),
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'business_profile',
+                child: ListTile(
+                  leading: Icon(Icons.business_center_outlined),
+                  title: Text('Business Profile'),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout),
+                  title: Text('Logout'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

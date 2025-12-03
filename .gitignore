@@ -49,3 +49,8 @@ build/
 /ios/Flutter/Release.xcconfig
 /ios/Runner/GeneratedPluginRegistrant.*
 /ios/Runner.xcworkspace/
+
+# Firebase cache and log files
+.firebase/
+*.log
+firebase-debug.log
