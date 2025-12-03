@@ -1,12 +1,9 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../models/business_model.dart';
-import '../services/location_service.dart';
-import '../services/business_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:developer' as developer;
+import 'package:mouth_metrics/models/business_model.dart';
+import 'package:mouth_metrics/services/business_service.dart';
 
 class NearbyClinicsScreen extends StatefulWidget {
   const NearbyClinicsScreen({super.key});
@@ -16,182 +13,96 @@ class NearbyClinicsScreen extends StatefulWidget {
 }
 
 class _NearbyClinicsScreenState extends State<NearbyClinicsScreen> {
-  bool _isLoading = true;
-  String? _error;
-  List<Business> _businesses = [];
-  Position? _currentPosition;
-  bool _isMapView = true; // Default to map view
-
-  final LocationService _locationService = LocationService();
-  final BusinessService _businessService = BusinessService();
-  final Completer<GoogleMapController> _controller = Completer();
+  GoogleMapController? _mapController;
+  final LatLng _center = const LatLng(45.521563, -122.677433);
   final Set<Marker> _markers = {};
+  final BusinessService _businessService = BusinessService();
+  Future<List<Business>>? _businessesFuture;
+  Position? _currentPosition;
 
   @override
   void initState() {
     super.initState();
-    _fetchNearbyClinics();
+    _getCurrentLocation();
   }
 
-  Future<void> _fetchNearbyClinics() async {
-    try {
-      _currentPosition = await _locationService.getCurrentLocation();
-      if (_currentPosition == null) {
-        if (mounted) {
-          setState(() {
-            _error = 'Could not determine your location. Please ensure location services are enabled.';
-            _isLoading = false;
-          });
-        }
-        return;
-      }
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
 
-      final businesses = await _businessService.findNearbyBusinesses(
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    _currentPosition = await Geolocator.getCurrentPosition();
+    setState(() {
+      _businessesFuture = _businessService.findNearbyBusinesses(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
       );
-      
-      if (mounted) {
-        setState(() {
-          _businesses = businesses;
-          _isLoading = false;
-          _updateMarkers();
-        });
-      }
-
-    } catch (e, s) {
-      developer.log('Error fetching nearby clinics', error: e, stackTrace: s, name: 'com.example.myapp.nearby');
-      if (mounted) {
-        setState(() {
-          _error = 'Failed to find nearby clinics. Please try again later.';
-          _isLoading = false;
-        });
-      }
-    }
+      _businessesFuture?.then((businesses) {
+        _updateMarkers(businesses);
+      });
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            zoom: 14.0,
+          ),
+        ),
+      );
+    });
   }
 
-  void _updateMarkers() {
-    if (!mounted) return;
-    final markers = <Marker>{};
-    for (final business in _businesses) {
-      markers.add(
-        Marker(
-          markerId: MarkerId(business.id),
+  void _updateMarkers(List<Business> businesses) {
+    setState(() {
+      _markers.clear();
+      for (final business in businesses) {
+        final marker = Marker(
+          markerId: MarkerId(business.id!),
           position: LatLng(business.location.latitude, business.location.longitude),
           infoWindow: InfoWindow(
             title: business.name,
             snippet: business.category,
           ),
-        ),
-      );
-    }
-    setState(() {
-      _markers.clear();
-      _markers.addAll(markers);
+        );
+        _markers.add(marker);
+      }
     });
-  }
-
-  String _getDistance(double lat, double lng) {
-    if (_currentPosition == null) return '';
-    final distance = Geolocator.distanceBetween(
-      _currentPosition!.latitude,
-      _currentPosition!.longitude,
-      lat,
-      lng,
-    );
-    final distanceInMiles = distance * 0.000621371;
-    return '${distanceInMiles.toStringAsFixed(1)} miles';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nearby Dental Clinics'),
-        actions: [
-          IconButton(
-            icon: Icon(_isMapView ? Icons.list : Icons.map),
-            onPressed: () {
-              setState(() {
-                _isMapView = !_isMapView;
-              });
-            },
-            tooltip: _isMapView ? 'List View' : 'Map View',
-          ),
-        ],
+        title: const Text('Nearby Clinics'),
       ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red, fontSize: 16),
-          ),
+      body: GoogleMap(
+        onMapCreated: _onMapCreated,
+        initialCameraPosition: CameraPosition(
+          target: _center,
+          zoom: 11.0,
         ),
-      );
-    }
-
-    if (_businesses.isEmpty) {
-      return const Center(
-        child: Text(
-          'No dental clinics found nearby.',
-          style: TextStyle(fontSize: 18),
-        ),
-      );
-    }
-
-    return _isMapView ? _buildMapView() : _buildListView();
-  }
-
-  Widget _buildMapView() {
-    return GoogleMap(
-      mapType: MapType.normal,
-      initialCameraPosition: CameraPosition(
-        target: _currentPosition != null 
-            ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude) 
-            : const LatLng(37.7749, -122.4194), // Default to SF
-        zoom: 12,
+        markers: _markers,
       ),
-      onMapCreated: (GoogleMapController controller) {
-        if (!_controller.isCompleted) {
-          _controller.complete(controller);
-        }
-      },
-      markers: _markers,
-      myLocationEnabled: true,
-      myLocationButtonEnabled: true,
-    );
-  }
-
-  Widget _buildListView() {
-    return ListView.builder(
-      itemCount: _businesses.length,
-      itemBuilder: (context, index) {
-        final business = _businesses[index];
-        final distance = _getDistance(business.location.latitude, business.location.longitude);
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            title: Text(business.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(business.category),
-            trailing: Text(distance, style: const TextStyle(color: Colors.grey)),
-            onTap: () {
-              // TODO: Navigate to a business details screen
-            },
-          ),
-        );
-      },
     );
   }
 }

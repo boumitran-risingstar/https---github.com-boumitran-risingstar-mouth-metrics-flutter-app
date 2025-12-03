@@ -89,7 +89,7 @@ class _MyBusinessesScreenState extends State<MyBusinessesScreen> {
                           icon: const Icon(Icons.edit_outlined),
                           tooltip: 'Edit',
                           onPressed: () {
-                            context.push('/business-profile?businessId=${business.id}');
+                            context.push('/business-profile?businessId=${business.id!}');
                           },
                         ),
                         IconButton(
