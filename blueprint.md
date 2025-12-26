@@ -183,3 +183,81 @@ This document outlines the design and features implemented in the application.
         *   `provider` is used for theme management (`ThemeProvider`).
 *   **Routing:**
     *   `go_router` was added and configured to handle navigation between the landing page and the home screen.
+
+## New Feature: Article Creation & Publishing Workflow
+
+This feature will allow users to create, review, and publish articles. It involves a full content management lifecycle from draft to a publicly visible, statically generated page.
+
+### Plan & Action Steps
+
+#### Phase 1: Backend Service (`article-service`)
+
+1.  **Create a new Microservice:**
+    *   Set up a new Node.js (Express) service in `backend/article-service`.
+    *   This service will manage all article-related data and logic.
+
+2.  **Define Data Models (Firestore):**
+    *   **`articles` collection:**
+        *   `title`: string
+        *   `content`: string (likely Markdown or HTML)
+        *   `authorId`: string (UID of the author)
+        *   `slug`: string (unique, URL-friendly identifier)
+        *   `status`: string (`draft`, `in_review`, `approved`, `published`)
+        *   `reviewers`: array of user UIDs
+        *   `approvals`: array of user UIDs who have approved
+        *   `publishedUrl`: string (URL of the static page)
+        *   `createdAt`: timestamp
+        *   `updatedAt`: timestamp
+    *   **`comments` collection:**
+        *   `articleId`: string
+        *   `authorId`: string
+        *   `content`: string
+        *   `parentCommentId`: string (for threaded replies)
+        *   `createdAt`: timestamp
+
+3.  **Implement API Endpoints:**
+    *   `POST /api/articles`: Create a new draft article.
+    *   `PUT /api/articles/:id`: Update an article's content (author only).
+    *   `GET /api/articles/:id`: Get article details.
+    *   `GET /api/articles`: List articles (with filtering).
+    *   `POST /api/articles/:id/comments`: Add a comment.
+    *   `POST /api/articles/:id/invite`: Invite a user to review.
+    *   `POST /api/articles/:id/approve`: Mark an article as approved by the current user.
+
+4.  **Create Automated Publishing Logic (Cloud Function/Service Trigger):**
+    *   Create a background process that triggers when an article's `approvals` list grows.
+    *   When `approvals.length >= 3`, the process will:
+        1.  Change the article `status` to `published`.
+        2.  Generate a unique, URL-safe `slug` from the title.
+        3.  Generate a static HTML file for the article content.
+        4.  Upload the HTML file to a public bucket in Firebase Storage, which is connected to Firebase Hosting. The path will be `articles/<slug>.html`.
+        5.  Save the public URL to the `publishedUrl` field in the article document.
+
+#### Phase 2: Frontend Implementation (Flutter)
+
+1.  **Project Setup:**
+    *   Add the `flutter_markdown` package to `pubspec.yaml` to render article content.
+    *   Add the `http` package for making API calls.
+
+2.  **Create a New Service:**
+    *   Develop an `article_service.dart` to communicate with the `article-service` backend API.
+
+3.  **Develop New Screens:**
+    *   **`Create/Edit Article Screen`**: A screen with a form for the article title and content (using a text area that supports Markdown).
+    *   **`Article List Screen`**: A screen that lists all published articles, fetched from the backend.
+    *   **`Article Detail/Review Screen`**: A comprehensive screen that:
+        *   Displays the article title and content.
+        *   Shows a comment section with the ability to add and reply to comments.
+        *   For authors: shows a list of reviewers and an option to invite more.
+        *   For reviewers: shows an "Approve" button.
+        *   For all users: shows the review/publication status.
+
+4.  **Update Routing:**
+    *   Add new routes in `lib/router.dart` for the new screens:
+        *   `/articles`: To the `Article List Screen`.
+        *   `/articles/:slug`: To the `Article Detail/Review Screen`.
+        *   `/my-articles/create`: To the `Create/Edit Article Screen`.
+        *   `/my-articles/edit/:id`: To pre-fill the edit screen with article data.
+
+5.  **Update Navigation:**
+    *   Add a new item to the main navigation (e.g., in the `HomeScreen`'s drawer or bottom navigation bar) to take users to the `/articles` route.

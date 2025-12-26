@@ -8,49 +8,28 @@
 .buildlog/
 .history
 .svn/
-*.jks
-*.keystore
+build/
+commit.template
 
 # IntelliJ
+.idea/
 *.iml
 *.ipr
-*.iws
-.idea/
 
-# Visual Studio Code
-.vscode/
-
-# Flutter/Dart
+# Flutter
 .dart_tool/
-.packages
-build/
-# The pubspec.lock file is specific to the project and should be checked into
-# version control. It specifies the exact versions of dependencies used in the
-# application. This ensures that everyone working on the project has the same
-# set of dependencies.
-# pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
 
-# Android
-*.apk
-*.aab
-/android/local.properties
-/android/.gradle/
-/android/app/build/
-/android/build/
+# Web
+.dart_tool/build/
 
-# iOS
-/ios/Pods/
-/ios/.symlinks/
-/ios/Flutter/App.framework
-/ios/Flutter/engine.xcframework
-/ios/Flutter/flutter_export_environment.sh
-/ios/Flutter/Generated.xcconfig
-/ios/Flutter/Debug.xcconfig
-/ios/Flutter/Release.xcconfig
-/ios/Runner/GeneratedPluginRegistrant.*
-/ios/Runner.xcworkspace/
-
-# Firebase cache and log files
-.firebase
-*.log
-firebase-debug.log
+# Node
+/backend/article-service/node_modules
+/backend/user-service/node_modules
+/backend/business-service/node_modules
+npm-debug.log
+yarn-error.log

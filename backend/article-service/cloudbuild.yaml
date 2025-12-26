@@ -1,0 +1,13 @@
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'article-service'
+  - '--source'
+  - '.'
+  - '--region'
+  - 'us-central1'
+  - '--allow-unauthenticated'
+  - '--platform'
+  - 'managed'

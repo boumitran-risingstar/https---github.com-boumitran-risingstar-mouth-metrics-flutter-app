@@ -36,6 +36,13 @@
     ],
     "rewrites": [
       {
+        "source": "/api/articles/**",
+        "run": {
+          "serviceId": "article-service",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/api/business/**",
         "run": {
           "serviceId": "business-service",
