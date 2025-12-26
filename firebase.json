@@ -65,6 +65,10 @@
         "function": "businessProfileRedirect"
       },
       {
+        "source": "/articles/**",
+        "function": "articleHandler"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

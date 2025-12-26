@@ -34,6 +34,24 @@ Mouth Metrics is a Flutter application designed to be a personal dental health c
 
 This document outlines the design and features implemented in the application.
 
+### Version 2.2.0
+
+*   **Public Article Routes:**
+    *   A new Cloud Function, `articleHandler`, was created to serve the statically generated article pages.
+    *   The `firebase.json` file was updated to include a rewrite rule that directs all requests for `/articles/**` to the `articleHandler` function.
+    *   This allows users to access published articles directly via a public URL (e.g., `https://your-app.web.app/articles/your-article-slug`).
+
+### Version 2.1.0
+
+*   **Article Review and Publishing Workflow:**
+    *   **Article Status:** Articles now have a status (`draft`, `inReview`, `approved`, `rejected`) which is displayed on the `ArticleDetailScreen`.
+    *   **Reviewer Invitations:** Authors can invite other users to review their articles by email.
+    *   **Reviewer Actions:** Users who are invited as reviewers can approve or reject an article.
+    *   **Automatic Publishing:** A Cloud Function (`autoPublishArticle`) was created to automatically publish articles that have been approved by at least three reviewers.
+        *   When an article is published, a static HTML page is generated and stored in a public Firebase Storage bucket.
+        *   The public URL of the static page is saved in the article's `publishedUrl` field.
+    *   **Frontend UI:** The `ArticleDetailScreen` was updated to include UI for displaying the article status, inviting reviewers, and approving/rejecting articles.
+
 ### Version 2.0.0
 
 *   **Dental Clinic Business Profile Management:**
@@ -67,7 +85,7 @@ This document outlines the design and features implemented in the application.
 ### Version 1.8.2
 
 *   **Navigation Flow Correction:**
-    *   In `lib/home_screen.dart`, the navigation from the "Find Dental Clinics" card was changed from `context.go()` to `context.push()`. This corrects the user experience by pushing the `nearby-clinics` screen onto the navigation stack, ensuring the user can press the back button to return to the dashboard as expected.
+    *   In `lib/home_screen.dart`, the navigation from the "Find Dental Clinics" card was changed from `context.go()` to `context.push()`. This corrects the user experience by pushing the `nearby-clinics` screen onto the navigation stack, ensuring the user can press the back button to return to the home screen as expected.
 *   **Dashboard UI Cleanup:**
     *   The back button was explicitly removed from the dashboard's `AppBar` by setting `automaticallyImplyLeading: false` in `lib/home_screen.dart`. This removes a confusing and unnecessary UI element from the app's main screen.
 *   **Backend Service Authentication Fix:**

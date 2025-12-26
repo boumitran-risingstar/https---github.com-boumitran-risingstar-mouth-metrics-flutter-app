@@ -1,4 +1,4 @@
-
+'''
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -164,4 +164,88 @@ class ArticleService {
       return null;
     }
   }
+
+  Future<bool> inviteReviewer(String articleId, String reviewerId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final token = await user.getIdToken();
+    final url = Uri.parse('$_baseUrl/api/articles/$articleId/invite');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'reviewerId': reviewerId}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error inviting reviewer: $e');
+      return false;
+    }
+  }
+
+  Future<bool> approveArticle(String articleId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final token = await user.getIdToken();
+    final url = Uri.parse('$_baseUrl/api/articles/$articleId/approve');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error approving article: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectArticle(String articleId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final token = await user.getIdToken();
+    final url = Uri.parse('$_baseUrl/api/articles/$articleId/reject');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error rejecting article: $e');
+      return false;
+    }
+  }
+
+  Future<String?> findUserByEmail(String email) async {
+    final url = Uri.parse('$_baseUrl/api/users/by-email/$email');
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+      });
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['uid'];
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
 }
+''

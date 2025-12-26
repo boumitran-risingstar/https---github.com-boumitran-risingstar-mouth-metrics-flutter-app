@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mouth_metrics/models/article_model.dart';
+import 'package:mouth_metrics/models/article_status.dart';
 import 'package:mouth_metrics/models/comment_model.dart';
 import 'package:mouth_metrics/services/article_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -20,6 +21,7 @@ class ArticleDetailScreen extends StatefulWidget {
 class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   final ArticleService _articleService = ArticleService();
   final _commentController = TextEditingController();
+  final _reviewerEmailController = TextEditingController();
   late Future<Article?> _articleFuture;
   late Future<List<Comment>> _commentsFuture;
   bool _isPostingComment = false;
@@ -79,6 +81,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   void dispose() {
     _commentController.dispose();
+    _reviewerEmailController.dispose();
     super.dispose();
   }
 
@@ -108,6 +111,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildStatusBadge(article.status),
+                      const SizedBox(height: 8),
                       Text(
                         article.title,
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -120,6 +125,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
+                      if (article.inReview)
+                        _buildReviewSection(article),
                       MarkdownBody(
                         data: article.content,
                         selectable: true,
@@ -146,9 +153,162 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
           );
         },
       ),
-      floatingActionButton: _buildEditFAB(),
+      floatingActionButton: _buildCustomFAB(),
     );
   }
+
+  Widget _buildStatusBadge(ArticleStatus status) {
+    Color color;
+    String text;
+    switch (status) {
+      case ArticleStatus.draft:
+        color = Colors.grey;
+        text = 'Draft';
+        break;
+      case ArticleStatus.inReview:
+        color = Colors.orange;
+        text = 'In Review';
+        break;
+      case ArticleStatus.approved:
+        color = Colors.green;
+        text = 'Approved';
+        break;
+      case ArticleStatus.rejected:
+        color = Colors.red;
+        text = 'Rejected';
+        break;
+    }
+
+    return Chip(
+      label: Text(text),
+      backgroundColor: color,
+      labelStyle: const TextStyle(color: Colors.white),
+    );
+  }
+
+
+  Widget _buildReviewSection(Article article) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isReviewer = article.reviewers.contains(user?.uid);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reviewers',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        ...article.reviewers.map((reviewerId) => Text(reviewerId)),
+        const SizedBox(height: 16),
+        if (isReviewer)
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () => _approveArticle(article.id),
+                child: const Text('Approve'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => _rejectArticle(article.id),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Reject'),
+              ),
+            ],
+          ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Future<void> _approveArticle(String articleId) async {
+    final success = await _articleService.approveArticle(articleId);
+    if (success && mounted) {
+      setState(() {
+        _loadArticleAndComments();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Article approved!'), backgroundColor: Colors.green),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to approve article.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _rejectArticle(String articleId) async {
+    final success = await _articleService.rejectArticle(articleId);
+    if (success && mounted) {
+      setState(() {
+        _loadArticleAndComments();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Article rejected!'), backgroundColor: Colors.orange),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to reject article.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _showInviteReviewerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Invite a Reviewer'),
+        content: TextField(
+          controller: _reviewerEmailController,
+          decoration: const InputDecoration(
+            labelText: 'Reviewer\'s Email',
+            hintText: 'Enter the email address of the reviewer',
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _inviteReviewer(_reviewerEmailController.text);
+            },
+            child: const Text('Invite'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _inviteReviewer(String email) async {
+    if (email.isEmpty) return;
+
+    final reviewerId = await _articleService.findUserByEmail(email);
+
+    if (reviewerId != null) {
+      final success = await _articleService.inviteReviewer(widget.articleId, reviewerId);
+      if (success && mounted) {
+        setState(() {
+          _loadArticleAndComments();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reviewer invited!'), backgroundColor: Colors.green),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to invite reviewer.'), backgroundColor: Colors.red),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not found.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
 
   Widget _buildCommentsSection() {
     return FutureBuilder<List<Comment>>(
@@ -265,27 +425,23 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     );
   }
 
-  Widget _buildEditFAB() {
+  Widget _buildCustomFAB() {
     return FutureBuilder<Article?>(
       future: _articleFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
         final article = snapshot.data!;
         final isAuthor = article.authorId == FirebaseAuth.instance.currentUser?.uid;
-        if (!isAuthor) return const SizedBox.shrink();
 
-        return FloatingActionButton.extended(
-          onPressed: () {
-            context.push('/articles/${article.id}/edit', extra: article).then((_) {
-              // Refresh article after editing
-              setState(() {
-                _loadArticleAndComments();
-              });
-            });
-          },
-          label: const Text('Edit Article'),
-          icon: const Icon(Icons.edit),
-        );
+        if (isAuthor) {
+          return FloatingActionButton.extended(
+            onPressed: _showInviteReviewerDialog,
+            label: const Text('Invite Reviewer'),
+            icon: const Icon(Icons.person_add),
+          );
+        } else {
+          return const SizedBox.shrink();
+        }
       },
     );
   }
