@@ -4,9 +4,31 @@
 
 Mouth Metrics is a Flutter application designed to be a personal dental health companion. It aims to provide users with tools and insights to better track and understand their oral hygiene habits and health. The application is built with a focus on a modern, clean, and intuitive user interface.
 
-## Current Task
+## Current Task: Implement Article Feature Screens
 
-No active development task. The focus is on monitoring and maintenance.
+### Plan
+
+1.  **Create `Article List Screen`:**
+    *   Create `lib/screens/article_list_screen.dart`.
+    *   This screen will fetch and display a list of published articles from the `article-service`.
+    *   Add a floating action button to navigate to the `Create Article Screen`.
+
+2.  **Create `Create/Edit Article Screen`:**
+    *   Create `lib/screens/create_article_screen.dart`.
+    *   This screen will contain a form with fields for the article title and content.
+    *   It will have a "Save" button to submit the new article to the `article-service`.
+
+3.  **Create `Article Detail/Review Screen`:**
+    *   Create `lib/screens/article_detail_screen.dart`.
+    *   This screen will display the full content of a selected article.
+    *   It will include a section for comments.
+    *   It will have functionality for authors and reviewers to manage the review process.
+
+4.  **Update Routing:**
+    *   Add new routes in `lib/main.dart` for `/articles`, `/create-article`, and `/articles/:id`.
+
+5.  **Update Navigation:**
+    *   Add a button or link on the `MyHomePage` to navigate to the new `Article List Screen`.
 
 ## Style, Design, and Features
 

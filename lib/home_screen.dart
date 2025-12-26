@@ -154,6 +154,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => context.push('/my-businesses'),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Articles Card
+              Card(
+                elevation: 2.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.article_outlined),
+                  title: const Text('Articles'),
+                  subtitle: const Text('Read and publish articles'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => context.push('/articles'),
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Conditional "Find Specialists" Card

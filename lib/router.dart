@@ -8,6 +8,9 @@ import 'package:mouth_metrics/login_screen.dart';
 import 'package:mouth_metrics/my_businesses_screen.dart';
 import 'package:mouth_metrics/profile_screen.dart';
 import 'package:mouth_metrics/nearby_clinics_screen.dart';
+import 'package:mouth_metrics/screens/article_list_screen.dart';
+import 'package:mouth_metrics/screens/create_article_screen.dart';
+import 'package:mouth_metrics/screens/article_detail_screen.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
@@ -65,6 +68,25 @@ final GoRouter router = GoRouter(
           path: 'my-businesses',
           builder: (context, state) {
             return const MyBusinessesScreen();
+          },
+        ),
+        GoRoute(
+          path: 'articles',
+          builder: (context, state) {
+            return const ArticleListScreen();
+          },
+        ),
+        GoRoute(
+          path: 'create-article',
+          builder: (context, state) {
+            return const CreateArticleScreen();
+          },
+        ),
+        GoRoute(
+          path: 'articles/:id',
+          builder: (context, state) {
+            final articleId = state.pathParameters['id']!;
+            return ArticleDetailScreen(articleId: articleId);
           },
         ),
       ],
