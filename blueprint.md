@@ -183,17 +183,3 @@ This document outlines the design and features implemented in the application.
         *   `provider` is used for theme management (`ThemeProvider`).
 *   **Routing:**
     *   `go_router` was added and configured to handle navigation between the landing page and the home screen.
-
-## Backlog
-
-### AI-Powered "Article of the Day"
-
-This feature will make the app more dynamic and engaging by using generative AI to create a unique article every time a user opens the app.
-
-**Plan:**
-
-1.  **Integrate Generative AI:** Add the `firebase_ai` package to the project.
-2.  **Generate Article Content:** Use the Gemini API to generate an article title and paragraph.
-3.  **Generate an Image:** Use Imagen to generate a relevant image.
-4.  **Update the UI:** Modify `home_screen.dart` to display the AI-generated content using a `FutureBuilder`.
-5.  **Refine the UI:** Polish the article card with modern styling.
