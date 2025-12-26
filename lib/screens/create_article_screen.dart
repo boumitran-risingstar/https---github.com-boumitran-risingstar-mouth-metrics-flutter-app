@@ -1,10 +1,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mouth_metrics/models/article_model.dart';
 import 'package:mouth_metrics/services/article_service.dart';
 
 class CreateArticleScreen extends StatefulWidget {
-  const CreateArticleScreen({super.key});
+  final Article? article; // Make article optional for creating or editing
+
+  const CreateArticleScreen({super.key, this.article});
 
   @override
   State<CreateArticleScreen> createState() => _CreateArticleScreenState();
@@ -17,6 +20,17 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
   final ArticleService _articleService = ArticleService();
 
   bool _isLoading = false;
+  late bool _isEditing;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditing = widget.article != null;
+    if (_isEditing) {
+      _titleController.text = widget.article!.title;
+      _contentController.text = widget.article!.content;
+    }
+  }
 
   Future<void> _saveArticle() async {
     if (_formKey.currentState!.validate()) {
@@ -24,10 +38,16 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
         _isLoading = true;
       });
 
-      final success = await _articleService.createArticle(
-        _titleController.text,
-        _contentController.text,
-      );
+      final success = _isEditing
+          ? await _articleService.updateArticle(
+              widget.article!.id,
+              _titleController.text,
+              _contentController.text,
+            )
+          : await _articleService.createArticle(
+              _titleController.text,
+              _contentController.text,
+            );
 
       setState(() {
         _isLoading = false;
@@ -35,12 +55,12 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Article created successfully!')),
+          SnackBar(content: Text('Article ${(_isEditing ? 'updated' : 'created')} successfully!')),
         );
         context.pop(); // Go back to the previous screen
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create article. Please try again.')),
+          SnackBar(content: Text('Failed to ${(_isEditing ? 'update' : 'create')} article. Please try again.')),
         );
       }
     }
@@ -57,7 +77,7 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create a New Article'),
+        title: Text(_isEditing ? 'Edit Article' : 'Create a New Article'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
